@@ -178,7 +178,7 @@ rb_geoip2_sr_dig(int argc, VALUE *argv, VALUE self)
 
   rb_scan_args(argc, argv, "1*", &arg, &rest);
   Check_Type(arg, T_STRING);
-  path = malloc(sizeof(char *) * RARRAY_LEN(rest));
+  path = malloc(sizeof(char *) * (RARRAY_LEN(rest) + 2));
 
   TypedData_Get_Struct(self, MMDB_lookup_result_s, &lookup_result_type, result);
 
@@ -189,6 +189,8 @@ rb_geoip2_sr_dig(int argc, VALUE *argv, VALUE self)
     tmp = StringValueCStr(e);
     path[i] = tmp;
   }
+
+  path[i+1] = NULL;
 
   entry = result->entry;
 
