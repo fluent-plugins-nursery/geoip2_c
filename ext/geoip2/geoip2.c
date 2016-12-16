@@ -99,10 +99,10 @@ mmdb_lookup(MMDB_s *mmdb, const char *ip_str, bool cleanup)
 
 
 static VALUE
-rb_geoip2_db_alloc(VALUE self)
+rb_geoip2_db_alloc(VALUE klass)
 {
   MMDB_s *mmdb = RB_ALLOC(MMDB_s);
-  return Data_Wrap_Struct(self, NULL, rb_geoip2_db_free, mmdb);
+  return Data_Wrap_Struct(klass, NULL, rb_geoip2_db_free, mmdb);
 }
 
 static void
