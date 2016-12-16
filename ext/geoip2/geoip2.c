@@ -15,7 +15,6 @@ static MMDB_lookup_result_s mmdb_lookup(MMDB_s *mmdb, const char *ip_str, bool c
 static VALUE mmdb_entry_data_decode(MMDB_entry_data_s *entry_data);
 
 static VALUE rb_geoip2_db_alloc(VALUE klass);
-static void rb_geoip2_db_free(MMDB_s *mmdb);
 static VALUE rb_geoip2_db_initialize(VALUE self, VALUE path);
 static VALUE rb_geoip2_db_close(VALUE self);
 static VALUE rb_geoip2_db_lookup(VALUE self, VALUE ip);
