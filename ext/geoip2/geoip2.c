@@ -13,6 +13,8 @@ static bool mmdb_is_closed(MMDB_s *mmdb);
 static void mmdb_free(void *mmdb);
 static MMDB_lookup_result_s mmdb_lookup(MMDB_s *mmdb, const char *ip_str, bool cleanup);
 static VALUE mmdb_entry_data_decode(MMDB_entry_data_s *entry_data);
+static VALUE mmdb_guard_parse_entry_data_list(VALUE ptr);
+static MMDB_entry_data_list_s *mmdb_parse_entry_data_list(MMDB_entry_data_list_s *data_list, VALUE *obj);
 
 static VALUE rb_geoip2_db_alloc(VALUE klass);
 static VALUE rb_geoip2_db_initialize(VALUE self, VALUE path);
@@ -22,6 +24,7 @@ static VALUE rb_geoip2_db_lookup(VALUE self, VALUE ip);
 static VALUE rb_geoip2_lr_alloc(VALUE klass);
 static VALUE rb_geoip2_lr_initialize(VALUE self);
 static VALUE rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self);
+static VALUE rb_geoip2_lr_to_h(VALUE self);
 
 // static void lookup_result_free(void *pointer);
 // static size_t lookup_result_size(void *pointer);
@@ -34,7 +37,7 @@ static const rb_data_type_t rb_mmdb_type = {
 
 static const rb_data_type_t rb_lookup_result_type = {
   "geoip2/lookup_result", {
-    0, -1, 0,
+    0, 0, 0,
   }, NULL, NULL
 };
 
@@ -152,6 +155,72 @@ mmdb_entry_data_decode(MMDB_entry_data_s *entry_data)
 }
 
 static VALUE
+mmdb_guard_parse_entry_data_list(VALUE ptr)
+{
+  MMDB_entry_data_list_s *data_list =
+    (struct MMDB_entry_data_list_s *)ptr;
+  VALUE obj;
+
+  mmdb_parse_entry_data_list(data_list, &obj);
+  return obj;
+}
+
+static MMDB_entry_data_list_s *
+mmdb_parse_entry_data_list(MMDB_entry_data_list_s *data_list, VALUE *obj)
+{
+  switch (data_list->entry_data.type) {
+  case MMDB_DATA_TYPE_MAP:
+    {
+      uint32_t data_size = data_list->entry_data.data_size;
+      VALUE hash = rb_hash_new();
+      for (data_list = data_list->next; data_size && data_list; data_size--) {
+        VALUE key;
+        VALUE val;
+        key = mmdb_entry_data_decode(&data_list->entry_data);
+        data_list = data_list->next;
+        data_list = mmdb_parse_entry_data_list(data_list, &val);
+        rb_hash_aset(hash, key, val);
+      }
+      *obj = hash;
+      break;
+    }
+  case MMDB_DATA_TYPE_ARRAY:
+    {
+      uint32_t data_size = data_list->entry_data.data_size;
+      VALUE array = rb_ary_new();
+      for (data_list = data_list->next; data_size && data_list; data_size--) {
+        VALUE val;
+        data_list = mmdb_parse_entry_data_list(data_list, &val);
+        rb_ary_push(array, val);
+      }
+      *obj = array;
+      break;
+    }
+  case MMDB_DATA_TYPE_UTF8_STRING: /* fall through */
+  case MMDB_DATA_TYPE_BYTES:
+  case MMDB_DATA_TYPE_DOUBLE:
+  case MMDB_DATA_TYPE_UINT16:
+  case MMDB_DATA_TYPE_UINT32:
+  case MMDB_DATA_TYPE_INT32:
+  case MMDB_DATA_TYPE_UINT64:
+  case MMDB_DATA_TYPE_UINT128:
+  case MMDB_DATA_TYPE_BOOLEAN:
+  case MMDB_DATA_TYPE_FLOAT:
+    {
+      VALUE val = mmdb_entry_data_decode(&data_list->entry_data);
+      data_list = data_list->next;
+      *obj = val;
+      break;
+    }
+  default:
+    rb_raise(rb_eGeoIP2Error,
+             "Unkown type: %d",
+             data_list->entry_data.type);
+  }
+  return data_list;
+}
+
+static VALUE
 rb_geoip2_db_alloc(VALUE klass)
 {
   VALUE obj;
@@ -205,6 +274,10 @@ rb_geoip2_db_lookup(VALUE self, VALUE ip)
   TypedData_Get_Struct(self, struct MMDB_s, &rb_mmdb_type, mmdb);
   result = mmdb_lookup(mmdb, ip_str, false);
 
+  if (!result.found_entry) {
+    return Qnil;
+  }
+
   obj = TypedData_Make_Struct(rb_cGeoIP2LookupResult,
                               struct MMDB_lookup_result_s,
                               &rb_lookup_result_type,
@@ -246,6 +319,7 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   char *tmp;
   VALUE e;
   VALUE val;
+  int status;
 
   rb_scan_args(argc, argv, "1*", &arg, &rest);
   Check_Type(arg, T_STRING);
@@ -268,11 +342,11 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 
   entry = result->entry;
 
-  int status = MMDB_aget_value(&entry, &entry_data, (const char *const *const)path);
+  status = MMDB_aget_value(&entry, &entry_data, (const char *const *const)path);
   free(path);
 
   if (status != MMDB_SUCCESS) {
-    fprintf(stdout, "%s\n", MMDB_strerror(status));
+    fprintf(stderr, "%s\n", MMDB_strerror(status));
     return Qnil;
   }
 
@@ -283,6 +357,33 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   return mmdb_entry_data_decode(&entry_data);
 }
 
+static VALUE
+rb_geoip2_lr_to_h(VALUE self)
+{
+  MMDB_lookup_result_s *result = NULL;
+  MMDB_entry_data_list_s *entry_data_list = NULL;
+  VALUE hash;
+  int status;
+
+  TypedData_Get_Struct(self,
+                       struct MMDB_lookup_result_s,
+                       &rb_lookup_result_type,
+                       result);
+  status = MMDB_get_entry_data_list(&result->entry, &entry_data_list);
+  if (status != MMDB_SUCCESS) {
+    rb_raise(rb_eGeoIP2Error, "%s", MMDB_strerror(status));
+  }
+  status = 0;
+
+  hash = rb_protect(mmdb_guard_parse_entry_data_list, (VALUE)entry_data_list, &status);
+  MMDB_free_entry_data_list(entry_data_list);
+
+  if (status != 0) {
+    rb_jump_tag(status);
+  }
+
+  return hash;
+}
 
 void
 Init_geoip2(void)
@@ -300,4 +401,5 @@ Init_geoip2(void)
   rb_define_alloc_func(rb_cGeoIP2LookupResult, rb_geoip2_lr_alloc);
   rb_define_method(rb_cGeoIP2LookupResult, "initialize", rb_geoip2_lr_initialize, 0);
   rb_define_method(rb_cGeoIP2LookupResult, "get_value", rb_geoip2_lr_get_value, -1);
+  rb_define_method(rb_cGeoIP2LookupResult, "to_h", rb_geoip2_lr_to_h, 0);
 }
