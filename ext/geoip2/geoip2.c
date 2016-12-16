@@ -1,15 +1,17 @@
 #include <ruby.h>
+#include <ruby/encoding.h>
 #include <maxminddb.h>
 
 VALUE rb_mGeoIP2;
 VALUE rb_cGeoIP2Database;
-VALUE rb_cGeoIP2SearchResult;
+VALUE rb_cGeoIP2LookupResult;
 VALUE rb_eGeoIP2Error;
 
 static void mmdb_open(const char *db_path, MMDB_s *mmdb);
 static void mmdb_close(MMDB_s *mmdb);
 static bool mmdb_is_closed(MMDB_s *mmdb);
 static MMDB_lookup_result_s mmdb_lookup(MMDB_s *mmdb, const char *ip_str, bool cleanup);
+static VALUE mmdb_entry_data_decode(MMDB_entry_data_s *entry_data);
 
 static VALUE rb_geoip2_db_alloc(VALUE self);
 static void rb_geoip2_db_free(MMDB_s *mmdb);
@@ -74,27 +76,57 @@ mmdb_lookup(MMDB_s *mmdb, const char *ip_str, bool cleanup)
   }
 
   return result;
-  /*
-  if (!result.found_entry) {
+}
+
+static VALUE
+mmdb_entry_data_decode(MMDB_entry_data_s *entry_data)
+{
+  switch (entry_data->type) {
+  case MMDB_DATA_TYPE_EXTENDED:
+    /* TODO: not implemented */
     return Qnil;
+  case MMDB_DATA_TYPE_POINTER:
+    /* TODO: not implemented */
+    return Qnil;
+  case MMDB_DATA_TYPE_UTF8_STRING:
+    return rb_enc_str_new(entry_data->utf8_string,
+                          entry_data->data_size,
+                          rb_utf8_encoding());
+  case MMDB_DATA_TYPE_DOUBLE:
+    return DBL2NUM(entry_data->double_value);
+  case MMDB_DATA_TYPE_BYTES:
+    return rb_enc_str_new(entry_data->bytes,
+                          entry_data->data_size,
+                          rb_ascii8bit_encoding());
+  case MMDB_DATA_TYPE_UINT16:
+    return UINT2NUM(entry_data->uint16);
+  case MMDB_DATA_TYPE_UINT32:
+    return UINT2NUM(entry_data->uint32);
+  case MMDB_DATA_TYPE_MAP:
+    /* TODO: not implemented */
+    return Qnil;
+  case MMDB_DATA_TYPE_INT32:
+    return INT2NUM(entry_data->int32);
+  case MMDB_DATA_TYPE_UINT64:
+    return UINT2NUM(entry_data->uint64);
+  case MMDB_DATA_TYPE_UINT128:
+    /* FIXME I'm not sure */
+    return UINT2NUM(entry_data->uint128);
+  case MMDB_DATA_TYPE_ARRAY:
+    /* TODO: not implemented */
+    return Qnil;
+  case MMDB_DATA_TYPE_CONTAINER:
+    /* TODO: not implemented */
+    return Qnil;
+  case MMDB_DATA_TYPE_END_MARKER:
+    return Qnil;
+  case MMDB_DATA_TYPE_BOOLEAN:
+    return entry_data->boolean ? Qtrue : Qfalse;
+  case MMDB_DATA_TYPE_FLOAT:
+    return rb_float_new(entry_data->float_value);
+  default:
+    rb_raise(rb_eGeoIP2Error, "Unkown type: %d", entry_data->type);
   }
-
-  MMDB_entry_data_list_s *entry_data_list = NULL;
-  int status = MMDB_get_entry_data_list(&result.entry, &entry_data_list);
-
-  if (status != MMDB_SUCCESS) {
-    MMDB_free_entry_data_list(entry_data_list);
-    if (cleanup && !mmdb_is_closed(mmdb)) {
-      mmdb_close(mmdb);
-    }
-    rb_raise(rb_eGeoIP2Error,
-             "failed to fetch result: %s", MMDB_strerror(status));
-  }
-
-  return TypedData_Wrap_Struct(rb_cGeoIP2SearchResult,
-                               &lookup_result_type,
-                               entry_data_list);
-  */
 }
 
 
@@ -158,7 +190,7 @@ rb_geoip2_db_lookup(VALUE self, VALUE ip)
   Data_Get_Struct(self, MMDB_s, mmdb);
   result = mmdb_lookup(mmdb, ip_str, false);
 
-  return TypedData_Wrap_Struct(rb_cGeoIP2SearchResult,
+  return TypedData_Wrap_Struct(rb_cGeoIP2LookupResult,
                                &lookup_result_type,
                                &result);
 }
@@ -175,6 +207,7 @@ rb_geoip2_sr_dig(int argc, VALUE *argv, VALUE self)
   MMDB_entry_data_s entry_data;
   char *tmp;
   VALUE e;
+  VALUE val;
 
   rb_scan_args(argc, argv, "1*", &arg, &rest);
   Check_Type(arg, T_STRING);
@@ -194,22 +227,19 @@ rb_geoip2_sr_dig(int argc, VALUE *argv, VALUE self)
 
   entry = result->entry;
 
-  MMDB_aget_value(&entry, &entry_data, (const char *const *const)path);
+  int status = MMDB_aget_value(&entry, &entry_data, (const char *const *const)path);
   free(path);
+
+  if (status != MMDB_SUCCESS) {
+    fprintf(stdout, "%s\n", MMDB_strerror(status));
+    return Qnil;
+  }
 
   if (!entry_data.has_data) {
     return Qnil;
   }
 
-  switch (entry_data.type) {
-  case MMDB_DATA_TYPE_UTF8_STRING:
-    return rb_str_new(entry_data.utf8_string, entry_data.data_size);
-    break;
-  default:
-    rb_raise(rb_eGeoIP2Error, "Unkown type: %d", entry_data.type);
-  }
-
-  return Qnil;
+  return mmdb_entry_data_decode(&entry_data);
 }
 
 
@@ -218,7 +248,7 @@ Init_geoip2(void)
 {
   rb_mGeoIP2 = rb_define_module("GeoIP2");
   rb_cGeoIP2Database = rb_define_class_under(rb_mGeoIP2, "Database", rb_cObject);
-  rb_cGeoIP2SearchResult = rb_define_class_under(rb_mGeoIP2, "SearchResult", rb_cData);
+  rb_cGeoIP2LookupResult = rb_define_class_under(rb_mGeoIP2, "LookupResult", rb_cData);
   rb_eGeoIP2Error = rb_define_class_under(rb_mGeoIP2, "Error", rb_eStandardError);
 
   rb_define_alloc_func(rb_cGeoIP2Database, rb_geoip2_db_alloc);
@@ -226,5 +256,5 @@ Init_geoip2(void)
   rb_define_method(rb_cGeoIP2Database, "close", rb_geoip2_db_close, 0);
   rb_define_method(rb_cGeoIP2Database, "lookup", rb_geoip2_db_lookup, 1);
 
-  rb_define_method(rb_cGeoIP2SearchResult, "dig", rb_geoip2_sr_dig, -1);
+  rb_define_method(rb_cGeoIP2LookupResult, "dig", rb_geoip2_sr_dig, -1);
 }
