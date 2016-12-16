@@ -128,7 +128,7 @@ rb_geoip2_db_initialize(VALUE self, VALUE path)
   Data_Get_Struct(self, MMDB_s, mmdb);
   mmdb_open(db_path, mmdb);
 
-  return self;
+  return Qnil;
 }
 
 static VALUE
