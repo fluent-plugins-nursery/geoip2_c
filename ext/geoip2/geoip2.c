@@ -10,21 +10,33 @@ VALUE rb_eGeoIP2Error;
 static void mmdb_open(const char *db_path, MMDB_s *mmdb);
 static void mmdb_close(MMDB_s *mmdb);
 static bool mmdb_is_closed(MMDB_s *mmdb);
+static void mmdb_free(void *mmdb);
 static MMDB_lookup_result_s mmdb_lookup(MMDB_s *mmdb, const char *ip_str, bool cleanup);
 static VALUE mmdb_entry_data_decode(MMDB_entry_data_s *entry_data);
 
-static VALUE rb_geoip2_db_alloc(VALUE self);
+static VALUE rb_geoip2_db_alloc(VALUE klass);
 static void rb_geoip2_db_free(MMDB_s *mmdb);
 static VALUE rb_geoip2_db_initialize(VALUE self, VALUE path);
 static VALUE rb_geoip2_db_close(VALUE self);
 static VALUE rb_geoip2_db_lookup(VALUE self, VALUE ip);
 
+static VALUE rb_geoip2_lr_alloc(VALUE klass);
+static VALUE rb_geoip2_lr_initialize(VALUE self);
+static VALUE rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self);
+
 // static void lookup_result_free(void *pointer);
 // static size_t lookup_result_size(void *pointer);
 
-static const rb_data_type_t lookup_result_type = {
-  "geoip2/lookup_result",
-  {0, 0, 0,},
+static const rb_data_type_t rb_mmdb_type = {
+  "geoip2/mmdb", {
+    0, mmdb_free, 0,
+  }, NULL, NULL
+};
+
+static const rb_data_type_t rb_lookup_result_type = {
+  "geoip2/lookup_result", {
+    0, -1, 0,
+  }, NULL, NULL
 };
 
 static void
@@ -48,6 +60,17 @@ static bool
 mmdb_is_closed(MMDB_s *mmdb)
 {
   return mmdb->file_content == NULL;
+}
+
+static void
+mmdb_free(void *ptr)
+{
+  MMDB_s *mmdb = (MMDB_s *)ptr;
+  if (!mmdb_is_closed(mmdb)) {
+    mmdb_close(mmdb);
+  }
+
+  xfree(mmdb);
 }
 
 static MMDB_lookup_result_s
@@ -129,22 +152,13 @@ mmdb_entry_data_decode(MMDB_entry_data_s *entry_data)
   }
 }
 
-
 static VALUE
 rb_geoip2_db_alloc(VALUE klass)
 {
-  MMDB_s *mmdb = RB_ALLOC(MMDB_s);
-  return Data_Wrap_Struct(klass, NULL, rb_geoip2_db_free, mmdb);
-}
-
-static void
-rb_geoip2_db_free(MMDB_s *mmdb)
-{
-  if (!mmdb_is_closed(mmdb)) {
-    mmdb_close(mmdb);
-  }
-
-  xfree(mmdb);
+  VALUE obj;
+  MMDB_s *mmdb;
+  obj = TypedData_Make_Struct(klass, struct MMDB_s, &rb_mmdb_type, mmdb);
+  return obj;
 }
 
 static VALUE
@@ -157,7 +171,7 @@ rb_geoip2_db_initialize(VALUE self, VALUE path)
 
   db_path = StringValueCStr(path);
 
-  Data_Get_Struct(self, MMDB_s, mmdb);
+  TypedData_Get_Struct(self, struct MMDB_s, &rb_mmdb_type, mmdb);
   mmdb_open(db_path, mmdb);
 
   return Qnil;
@@ -168,7 +182,7 @@ rb_geoip2_db_close(VALUE self)
 {
   MMDB_s *mmdb;
 
-  Data_Get_Struct(self, MMDB_s, mmdb);
+  TypedData_Get_Struct(self, struct MMDB_s, &rb_mmdb_type, mmdb);
 
   if (!mmdb_is_closed(mmdb)) {
     mmdb_close(mmdb);
@@ -183,20 +197,45 @@ rb_geoip2_db_lookup(VALUE self, VALUE ip)
   char *ip_str;
   MMDB_s *mmdb;
   MMDB_lookup_result_s result;
+  MMDB_lookup_result_s *result_ptr;
+  VALUE obj;
 
   Check_Type(ip, T_STRING);
   ip_str = StringValueCStr(ip);
 
-  Data_Get_Struct(self, MMDB_s, mmdb);
+  TypedData_Get_Struct(self, struct MMDB_s, &rb_mmdb_type, mmdb);
   result = mmdb_lookup(mmdb, ip_str, false);
 
-  return TypedData_Wrap_Struct(rb_cGeoIP2LookupResult,
-                               &lookup_result_type,
-                               &result);
+  obj = TypedData_Make_Struct(rb_cGeoIP2LookupResult,
+                              struct MMDB_lookup_result_s,
+                              &rb_lookup_result_type,
+                              result_ptr);
+  result_ptr->found_entry = result.found_entry;
+  result_ptr->entry = result.entry;
+  result_ptr->netmask = result.netmask;
+  return obj;
 }
 
 static VALUE
-rb_geoip2_sr_dig(int argc, VALUE *argv, VALUE self)
+rb_geoip2_lr_alloc(VALUE klass)
+{
+  VALUE obj;
+  MMDB_lookup_result_s *result;
+  obj = TypedData_Make_Struct(klass,
+                              struct MMDB_lookup_result_s,
+                              &rb_lookup_result_type,
+                              result);
+  return obj;
+}
+
+static VALUE
+rb_geoip2_lr_initialize(VALUE self)
+{
+  return Qnil;
+}
+
+static VALUE
+rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 {
   VALUE arg;
   VALUE rest;
@@ -213,7 +252,10 @@ rb_geoip2_sr_dig(int argc, VALUE *argv, VALUE self)
   Check_Type(arg, T_STRING);
   path = malloc(sizeof(char *) * (RARRAY_LEN(rest) + 2));
 
-  TypedData_Get_Struct(self, MMDB_lookup_result_s, &lookup_result_type, result);
+  TypedData_Get_Struct(self,
+                       struct MMDB_lookup_result_s,
+                       &rb_lookup_result_type,
+                       result);
 
   path[i] = StringValueCStr(arg);
   while (RARRAY_LEN(rest) != 0) {
@@ -247,7 +289,7 @@ void
 Init_geoip2(void)
 {
   rb_mGeoIP2 = rb_define_module("GeoIP2");
-  rb_cGeoIP2Database = rb_define_class_under(rb_mGeoIP2, "Database", rb_cObject);
+  rb_cGeoIP2Database = rb_define_class_under(rb_mGeoIP2, "Database", rb_cData);
   rb_cGeoIP2LookupResult = rb_define_class_under(rb_mGeoIP2, "LookupResult", rb_cData);
   rb_eGeoIP2Error = rb_define_class_under(rb_mGeoIP2, "Error", rb_eStandardError);
 
@@ -256,5 +298,7 @@ Init_geoip2(void)
   rb_define_method(rb_cGeoIP2Database, "close", rb_geoip2_db_close, 0);
   rb_define_method(rb_cGeoIP2Database, "lookup", rb_geoip2_db_lookup, 1);
 
-  rb_define_method(rb_cGeoIP2LookupResult, "dig", rb_geoip2_sr_dig, -1);
+  rb_define_alloc_func(rb_cGeoIP2LookupResult, rb_geoip2_lr_alloc);
+  rb_define_method(rb_cGeoIP2LookupResult, "initialize", rb_geoip2_lr_initialize, 0);
+  rb_define_method(rb_cGeoIP2LookupResult, "get_value", rb_geoip2_lr_get_value, -1);
 }
