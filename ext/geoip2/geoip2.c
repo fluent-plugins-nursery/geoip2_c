@@ -219,8 +219,8 @@ Init_geoip2(void)
   rb_cGeoIP2SearchResult = rb_define_class_under(rb_mGeoIP2, "SearchResult", rb_cData);
   rb_eGeoIP2Error = rb_define_class_under(rb_mGeoIP2, "Error", rb_eStandardError);
 
+  rb_define_alloc_func(rb_cGeoIP2Database, rb_geoip2_db_alloc);
   rb_define_method(rb_cGeoIP2Database, "initialize", rb_geoip2_db_initialize, 1);
-  rb_define_method(rb_cGeoIP2Database, "allocate", rb_geoip2_db_alloc, 0);
   rb_define_method(rb_cGeoIP2Database, "close", rb_geoip2_db_close, 0);
   rb_define_method(rb_cGeoIP2Database, "lookup", rb_geoip2_db_lookup, 1);
 
