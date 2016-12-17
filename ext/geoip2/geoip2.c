@@ -318,7 +318,6 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   MMDB_entry_data_s entry_data;
   char *tmp;
   VALUE e;
-  VALUE val;
   int status;
 
   rb_scan_args(argc, argv, "1*", &arg, &rest);
@@ -343,17 +342,33 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   entry = result->entry;
 
   status = MMDB_aget_value(&entry, &entry_data, (const char *const *const)path);
-  free(path);
 
   if (status != MMDB_SUCCESS) {
+    free(path);
     fprintf(stderr, "%s\n", MMDB_strerror(status));
     return Qnil;
   }
 
   if (!entry_data.has_data) {
+    free(path);
     return Qnil;
   }
 
+  if (entry_data.type == MMDB_DATA_TYPE_MAP ||
+      entry_data.type == MMDB_DATA_TYPE_ARRAY) {
+    VALUE array = rb_ary_new();
+    VALUE hash;
+    VALUE val;
+    for (int j = 0; path[j] != NULL; j++) {
+      rb_ary_push(array, rb_str_new_cstr(path[j]));
+    }
+    hash = rb_funcall(self, rb_intern("to_h"), 0);
+    val = rb_apply(hash, rb_intern("dig"), array);
+    free(path);
+    return val;
+  }
+
+  free(path);
   return mmdb_entry_data_decode(&entry_data);
 }
 
