@@ -356,6 +356,7 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 
   if (entry_data.type == MMDB_DATA_TYPE_MAP ||
       entry_data.type == MMDB_DATA_TYPE_ARRAY) {
+    // FIXME optimize below code
     VALUE array = rb_ary_new();
     VALUE hash;
     VALUE val;
