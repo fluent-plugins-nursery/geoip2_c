@@ -363,7 +363,8 @@ rb_geoip2_lr_to_h(VALUE self)
   MMDB_lookup_result_s *result = NULL;
   MMDB_entry_data_list_s *entry_data_list = NULL;
   VALUE hash;
-  int status;
+  int status = 0;
+  int exception = 0;
 
   TypedData_Get_Struct(self,
                        struct MMDB_lookup_result_s,
@@ -373,13 +374,12 @@ rb_geoip2_lr_to_h(VALUE self)
   if (status != MMDB_SUCCESS) {
     rb_raise(rb_eGeoIP2Error, "%s", MMDB_strerror(status));
   }
-  status = 0;
 
-  hash = rb_protect(mmdb_guard_parse_entry_data_list, (VALUE)entry_data_list, &status);
+  hash = rb_protect(mmdb_guard_parse_entry_data_list, (VALUE)entry_data_list, &exception);
   MMDB_free_entry_data_list(entry_data_list);
 
-  if (status != 0) {
-    rb_jump_tag(status);
+  if (exception != 0) {
+    rb_jump_tag(exception);
   }
 
   return hash;
