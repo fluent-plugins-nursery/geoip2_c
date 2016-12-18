@@ -44,6 +44,24 @@ class GeoIP2Test < Test::Unit::TestCase
       }
       assert_equal(expected, actual)
     end
+
+    test "city.names is a Hash" do
+      result = @db.lookup("81.2.69.142")
+      assert_instance_of(Hash, result.get_value("city", "names"))
+    end
+
+    test "subdivisions is an Array" do
+      result = @db.lookup("81.2.69.142")
+      assert_instance_of(Array, result.get_value("subdivisions"))
+    end
+
+    data do
+      random_ip_data("127.0.0.0/24")
+        .merge(random_ip_data("192.168.0.0/24"))
+    end
+    test "cannot find IPv4 private address" do |ip|
+      assert_nil(@db.lookup(ip))
+    end
   end
 
   sub_test_case "anonymous" do
