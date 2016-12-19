@@ -120,7 +120,7 @@ mmdb_entry_data_decode(MMDB_entry_data_s *entry_data)
   case MMDB_DATA_TYPE_DOUBLE:
     return DBL2NUM(entry_data->double_value);
   case MMDB_DATA_TYPE_BYTES:
-    return rb_enc_str_new(entry_data->bytes,
+    return rb_enc_str_new((const char *)entry_data->bytes,
                           entry_data->data_size,
                           rb_ascii8bit_encoding());
   case MMDB_DATA_TYPE_UINT16:
