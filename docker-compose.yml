@@ -3,3 +3,4 @@ services:
   test:
     build:
       context: .
+    command: ruby -run -e httpd

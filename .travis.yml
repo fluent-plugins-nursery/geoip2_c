@@ -16,7 +16,8 @@ before_install:
 before_script:
   - docker-compose build
   - docker-compose ps
-  - docker-compose start test
+  - docker-compose up -d
+  - docker-compose exec test bundle install
 
 script:
   - docker-compose exec test bundle exec rake test
