@@ -135,8 +135,11 @@ mmdb_entry_data_decode(MMDB_entry_data_s *entry_data)
   case MMDB_DATA_TYPE_UINT64:
     return UINT2NUM(entry_data->uint64);
   case MMDB_DATA_TYPE_UINT128:
-    /* FIXME I'm not sure */
+#if !(MMDB_UINT128_IS_BYTE_ARRAY)
     return UINT2NUM(entry_data->uint128);
+#else
+    rb_raise(rb_eNotImpError, "TODO: unit8_t[16] -> Integer");
+#endif
   case MMDB_DATA_TYPE_ARRAY:
     /* TODO: not implemented */
     return Qnil;
