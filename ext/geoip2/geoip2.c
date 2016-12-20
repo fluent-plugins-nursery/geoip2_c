@@ -308,12 +308,12 @@ rb_geoip2_lr_initialize(VALUE self)
 }
 
 static inline char*
-rb_geoip_convert_to_string(VALUE object)
+rb_geoip2_lr_arg_convert_to_cstring(VALUE sym_or_str)
 {
-  if (TYPE(object) == T_SYMBOL) {
-    return RSTRING_PTR(SYM2STR(object));
+  if (TYPE(sym_or_str) == T_SYMBOL) {
+    return RSTRING_PTR(SYM2STR(sym_or_str));
   } else {
-    return StringValueCStr(object);
+    return StringValueCStr(sym_or_str);
   }
 }
 
@@ -349,11 +349,11 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
                        &rb_lookup_result_type,
                        result);
 
-  path[i] = rb_geoip_convert_to_string(arg);
+  path[i] = rb_geoip2_lr_arg_convert_to_cstring(arg);
   while (RARRAY_LEN(rest) != 0) {
     ++i;
     e = rb_ary_shift(rest);
-    tmp = rb_geoip_convert_to_string(e);
+    tmp = rb_geoip2_lr_arg_convert_to_cstring(e);
     path[i] = tmp;
   }
 
