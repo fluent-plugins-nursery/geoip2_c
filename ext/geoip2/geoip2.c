@@ -1,6 +1,7 @@
 #include <ruby.h>
 #include <ruby/encoding.h>
 #include <maxminddb.h>
+#include "rb_compat.h"
 
 VALUE rb_mGeoIP2;
 VALUE rb_cGeoIP2Database;
@@ -310,9 +311,7 @@ static inline char*
 rb_geoip_convert_to_string(VALUE object)
 {
   if (TYPE(object) == T_SYMBOL) {
-    // TODO: Use rb_sym2str() instead of rb_id2str(SYM2ID()) when
-    // dropping Ruby 2.1 support.
-    return RSTRING_PTR(rb_id2str(SYM2ID(object)));
+    return RSTRING_PTR(SYM2STR(object));
   } else {
     return StringValueCStr(object);
   }
