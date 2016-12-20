@@ -306,6 +306,18 @@ rb_geoip2_lr_initialize(VALUE self)
   return Qnil;
 }
 
+static inline char*
+rb_geoip_convert_to_string(VALUE object)
+{
+  if (TYPE(object) == T_SYMBOL) {
+    // TODO: Use rb_sym2str() instead of rb_id2str(SYM2ID()) when
+    // dropping Ruby 2.1 support.
+    return RSTRING_PTR(rb_id2str(SYM2ID(object)));
+  } else {
+    return StringValueCStr(object);
+  }
+}
+
 static VALUE
 rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 {
@@ -321,7 +333,16 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   int status;
 
   rb_scan_args(argc, argv, "1*", &arg, &rest);
-  Check_Type(arg, T_STRING);
+  switch(TYPE(arg)) {
+    case T_STRING:
+    case T_SYMBOL:
+      {
+        break;
+      }
+    default:
+      rb_raise(rb_eArgError, "Expected a String or a Symbol");
+      break;
+  }
   path = malloc(sizeof(char *) * (RARRAY_LEN(rest) + 2));
 
   TypedData_Get_Struct(self,
@@ -329,11 +350,11 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
                        &rb_lookup_result_type,
                        result);
 
-  path[i] = StringValueCStr(arg);
+  path[i] = rb_geoip_convert_to_string(arg);
   while (RARRAY_LEN(rest) != 0) {
     ++i;
     e = rb_ary_shift(rest);
-    tmp = StringValueCStr(e);
+    tmp = rb_geoip_convert_to_string(e);
     path[i] = tmp;
   }
 
