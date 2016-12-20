@@ -311,7 +311,7 @@ static inline char*
 rb_geoip2_lr_arg_convert_to_cstring(VALUE sym_or_str)
 {
   if (TYPE(sym_or_str) == T_SYMBOL) {
-    return RSTRING_PTR(SYM2STR(sym_or_str));
+    return RSTRING_PTR(rb_sym2str(sym_or_str));
   } else {
     return StringValueCStr(sym_or_str);
   }

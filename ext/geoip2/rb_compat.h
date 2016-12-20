@@ -4,9 +4,7 @@
 #include <ruby.h>
 
 #ifndef HAVE_RB_SYM2STR
-#  define SYM2STR(name) (rb_id2str(SYM2ID(name)))
-#else
-#  define SYM2STR(name) (rb_sym2str(name))
+#  define rb_sym2str(name) (rb_id2str(SYM2ID(name)))
 #endif
 
 #endif
