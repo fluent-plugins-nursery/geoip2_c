@@ -82,8 +82,8 @@ Benchmark.bmbm do |x|
       if r
         r.dig("country", "iso_code")
         r.dig("country", "names", "en")
-        # r.dig("subdivisions", "0", "iso_code")
-        # r.dig("subdivisions", "0", "names", "en")
+        r.dig("subdivisions", "0", "iso_code")
+        r.dig("subdivisions", "0", "names", "en")
         r.dig("city", "names", "en")
         r.dig("postal", "code")
         r.dig("location", "latitude")
