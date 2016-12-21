@@ -6,9 +6,9 @@ env:
   global:
     DOCKER_COMPOSE_VERSION: 1.8.1
   matrix:
-    - BUNDLE_GEMFILE=gemfiles/ruby_2.1.gemfile RUBY_VERSION=2.1
-    - BUNDLE_GEMFILE=gemfiles/ruby_2.2.gemfile RUBY_VERSION=2.2
-    - RUBY_VERSION=2.3
+    - BUNDLE_GEMFILE=gemfiles/ruby_2.1.gemfile TARGET_RUBY_VERSION=2.1
+    - BUNDLE_GEMFILE=gemfiles/ruby_2.2.gemfile TARGET_RUBY_VERSION=2.2
+    - TARGET_RUBY_VERSION=2.3
 
 before_install:
   #- sudo apt-get update
@@ -19,12 +19,12 @@ before_install:
   - sudo mv docker-compose /usr/local/bin/
 
 before_script:
-  - docker-compose build
+  - docker-compose build test-ruby${TARGET_RUBY_VERSION}
   - docker-compose ps
-  - docker-compose up -d
-  - docker-compose exec test-ruby${RUBY_VERSION} bundle install
-  - docker-compose exec test-ruby${RUBY_VERSION} bundle exec rake compile
+  - docker-compose up -d test-ruby${TARGET_RUBY_VERSION}
+  - docker-compose exec test-ruby${TARGET_RUBY_VERSION} bundle install
+  - docker-compose exec test-ruby${TARGET_RUBY_VERSION} bundle exec rake compile
 
 script:
-  - docker-compose exec test-ruby${RUBY_VERSION} bundle exec rake test
+  - docker-compose exec test-ruby${TARGET_RUBY_VERSION} bundle exec rake test
 
