@@ -399,8 +399,14 @@ rb_geoip2_lr_to_h(VALUE self)
   MMDB_lookup_result_s *result = NULL;
   MMDB_entry_data_list_s *entry_data_list = NULL;
   VALUE hash;
+  VALUE cache;
   int status = 0;
   int exception = 0;
+
+  cache = rb_ivar_get(self, rb_intern("rb_hash"));
+  if (!NIL_P(cache)) {
+    return cache;
+  }
 
   TypedData_Get_Struct(self,
                        struct MMDB_lookup_result_s,
@@ -417,6 +423,8 @@ rb_geoip2_lr_to_h(VALUE self)
   if (exception != 0) {
     rb_jump_tag(exception);
   }
+
+  rb_ivar_set(self, rb_intern("rb_hash"), hash);
 
   return hash;
 }
