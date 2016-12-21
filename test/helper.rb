@@ -35,7 +35,8 @@ end
 def random_ip_data(address_mask, n = 10)
   hash = {}
   random_ip_addresses(address_mask, n).each do |ip|
-    hash[ip.to_s] = ip.to_s
+    ip_str = ip.to_s
+    hash[ip_str] = ip_str
   end
   hash
 end
