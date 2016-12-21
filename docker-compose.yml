@@ -1,6 +1,18 @@
 version: "2"
 services:
-  test:
+  test-ruby2.3:
     build:
       context: .
+      dockerfile: dockerfiles/Dockerfile-ruby2.3
     command: ruby -run -e httpd
+  test-ruby2.2:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile-ruby2.2
+    command: ruby -run -e httpd
+  test-ruby2.1:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile-ruby2.1
+    command: ruby -run -e httpd
+
