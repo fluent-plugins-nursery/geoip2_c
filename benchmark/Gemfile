@@ -1,0 +1,10 @@
+source "https://rubygems.org"
+
+gem "maxmind_geoip2"
+gem "maxminddb"
+gem "hive_geoip2"
+gem "geoip2_compat"
+gem "geoip-c", require: "geoip"
+gem "geoip2_c", path: ".."
+# Ruby implementation exclusive with geoip-c
+# gem "geoip"
