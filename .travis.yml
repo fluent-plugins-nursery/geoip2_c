@@ -6,9 +6,9 @@ env:
   global:
     DOCKER_COMPOSE_VERSION: 1.8.1
   matrix:
-    - BUNDLE_GEMFILE=gemfiles/ruby_2.1.gemfile TARGET_RUBY_VERSION=2.1
-    - BUNDLE_GEMFILE=gemfiles/ruby_2.2.gemfile TARGET_RUBY_VERSION=2.2
-    - BUNDLE_GEMFILE=gemfiles/ruby_2.3.gemfile TARGET_RUBY_VERSION=2.3
+    - TARGET_RUBY_VERSION=2.1
+    - TARGET_RUBY_VERSION=2.2
+    - TARGET_RUBY_VERSION=2.3
 
 before_install:
   #- sudo apt-get update
