@@ -365,7 +365,7 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 
   if (status != MMDB_SUCCESS) {
     free(path);
-    fprintf(stderr, "%s\n", MMDB_strerror(status));
+    /* fprintf(stderr, "%s:%s\n", __FUNCTION__, MMDB_strerror(status)); */
     return Qnil;
   }
 
