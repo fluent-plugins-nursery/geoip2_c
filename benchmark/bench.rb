@@ -31,13 +31,13 @@ geoip2_c = GeoIP2::Database.new("./GeoLite2-City.mmdb")
 
 Benchmark.bmbm do |x|
   if geoip.respond_to?(:look_up)
-    x.report("geoip") do
+    x.report("geoip(legacy format)") do
       ips.each do |ip|
         geoip.look_up(ip)
       end
     end
   else
-    x.report("geoip(ruby)") do
+    x.report("geoip(legacy format)(ruby)") do
       ips.each do |ip|
         geoip.city(ip)
       end
@@ -66,6 +66,29 @@ Benchmark.bmbm do |x|
   x.report("geoip2_c") do
     ips.each do |ip|
       geoip2_c.lookup(ip)
+    end
+  end
+  x.report("geoip2_c(#to_h)") do
+    ips.each do |ip|
+      r = geoip2_c.lookup(ip)
+      if r
+        r.to_h
+      end
+    end
+  end
+  x.report("geoip2_c(8 keys)") do
+    ips.each do |ip|
+      r = geoip2_c.lookup(ip)
+      if r
+        r.dig("country", "iso_code")
+        r.dig("country", "names", "en")
+        # r.dig("subdivisions", "0", "iso_code")
+        # r.dig("subdivisions", "0", "names", "en")
+        r.dig("city", "names", "en")
+        r.dig("postal", "code")
+        r.dig("location", "latitude")
+        r.dig("location", "longtitude")
+      end
     end
   end
 end
