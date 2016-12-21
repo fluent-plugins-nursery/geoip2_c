@@ -3,7 +3,12 @@ services:
   - docker
 
 env:
-  DOCKER_COMPOSE_VERSION: 1.8.1
+  global:
+    DOCKER_COMPOSE_VERSION: 1.8.1
+  matrix:
+    - TARGET_RUBY_VERSION=2.1
+    - TARGET_RUBY_VERSION=2.2
+    - TARGET_RUBY_VERSION=2.3
 
 before_install:
   #- sudo apt-get update
@@ -14,12 +19,12 @@ before_install:
   - sudo mv docker-compose /usr/local/bin/
 
 before_script:
-  - docker-compose build
+  - docker-compose build test-ruby${TARGET_RUBY_VERSION}
   - docker-compose ps
-  - docker-compose up -d
-  - docker-compose exec test bundle install
-  - docker-compose exec test bundle exec rake compile
+  - docker-compose up -d test-ruby${TARGET_RUBY_VERSION}
+  - docker-compose exec test-ruby${TARGET_RUBY_VERSION} bundle install
+  - docker-compose exec test-ruby${TARGET_RUBY_VERSION} bundle exec rake compile
 
 script:
-  - docker-compose exec test bundle exec rake test
+  - docker-compose exec test-ruby${TARGET_RUBY_VERSION} bundle exec rake test
 
