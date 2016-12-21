@@ -27,40 +27,80 @@ class GeoIP2Test < Test::Unit::TestCase
       @db.close
     end
 
-    data do
-      random_ip_data("::81.2.69.142/127")
-    end
-    test "London" do |ip|
-      result = @db.lookup(ip)
-      expected = {
-        city_name: "London",
-        city_geoname_id: 2643743,
-        continent_code: "EU",
-      }
-      actual = {
-        city_name: result.get_value("city", "names", "en"),
-        city_geoname_id: result.get_value("city", "geoname_id"),
-        continent_code: result.get_value("continent", "code"),
-      }
-      assert_equal(expected, actual)
+    sub_test_case "with String arguments" do
+      data do
+        random_ip_data("::81.2.69.142/127")
+      end
+      test "London" do |ip|
+        result = @db.lookup(ip)
+        expected = {
+          city_name: "London",
+          city_geoname_id: 2643743,
+          continent_code: "EU",
+        }
+        actual = {
+          city_name: result.get_value("city", "names", "en"),
+          city_geoname_id: result.get_value("city", "geoname_id"),
+          continent_code: result.get_value("continent", "code"),
+        }
+        assert_equal(expected, actual)
+      end
+
+      test "city.names is a Hash" do
+        result = @db.lookup("81.2.69.142")
+        assert_instance_of(Hash, result.get_value("city", "names"))
+      end
+
+      test "subdivisions is an Array" do
+        result = @db.lookup("81.2.69.142")
+        assert_instance_of(Array, result.get_value("subdivisions"))
+      end
+
+      data do
+        random_ip_data("127.0.0.0/24")
+          .merge(random_ip_data("192.168.0.0/24"))
+      end
+      test "cannot find IPv4 private address" do |ip|
+        assert_nil(@db.lookup(ip))
+      end
     end
 
-    test "city.names is a Hash" do
-      result = @db.lookup("81.2.69.142")
-      assert_instance_of(Hash, result.get_value("city", "names"))
-    end
+    sub_test_case "with Symbol arguments" do
+      data do
+        random_ip_data("::81.2.69.142/127")
+      end
+      test "London" do |ip|
+        result = @db.lookup(ip)
+        expected = {
+          city_name: "London",
+          city_geoname_id: 2643743,
+          continent_code: "EU",
+        }
+        actual = {
+          city_name: result.get_value(:city, :names, :en),
+          city_geoname_id: result.get_value(:city, :geoname_id),
+          continent_code: result.get_value(:continent, :code),
+        }
+        assert_equal(expected, actual)
+      end
 
-    test "subdivisions is an Array" do
-      result = @db.lookup("81.2.69.142")
-      assert_instance_of(Array, result.get_value("subdivisions"))
-    end
+      test "city.names is a Hash" do
+        result = @db.lookup("81.2.69.142")
+        assert_instance_of(Hash, result.get_value(:city, :names))
+      end
 
-    data do
-      random_ip_data("127.0.0.0/24")
-        .merge(random_ip_data("192.168.0.0/24"))
-    end
-    test "cannot find IPv4 private address" do |ip|
-      assert_nil(@db.lookup(ip))
+      test "subdivisions is an Array" do
+        result = @db.lookup("81.2.69.142")
+        assert_instance_of(Array, result.get_value(:subdivisions))
+      end
+
+      data do
+        random_ip_data("127.0.0.0/24")
+          .merge(random_ip_data("192.168.0.0/24"))
+      end
+      test "cannot find IPv4 private address" do |ip|
+        assert_nil(@db.lookup(ip))
+      end
     end
   end
 
@@ -147,41 +187,82 @@ class GeoIP2Test < Test::Unit::TestCase
       @db.close
     end
 
-    data do
-      random_ip_data("2001:218::/32")
-        .merge(random_ip_data("2001:240::/32"))
-    end
-    test "Japan" do |ip|
-      result = @db.lookup(ip)
-      expected = {
-        continent_code: "AS",
-        country_iso_code: "JP",
-        country_name_en: "Japan"
-      }
-      actual = {
-        continent_code: result.get_value("continent", "code"),
-        country_iso_code: result.get_value("country", "iso_code"),
-        country_name_en: result.get_value("country", "names", "en")
-      }
-      assert_equal(expected, actual)
+    sub_test_case "with String arguments" do
+      data do
+        random_ip_data("2001:218::/32")
+          .merge(random_ip_data("2001:240::/32"))
+      end
+      test "Japan" do |ip|
+        result = @db.lookup(ip)
+        expected = {
+          continent_code: "AS",
+          country_iso_code: "JP",
+          country_name_en: "Japan"
+        }
+        actual = {
+          continent_code: result.get_value("continent", "code"),
+          country_iso_code: result.get_value("country", "iso_code"),
+          country_name_en: result.get_value("country", "names", "en")
+        }
+        assert_equal(expected, actual)
+      end
+
+      data do
+        random_ip_data("::89.160.20.128/121")
+      end
+      test "Sweden" do |ip|
+        result = @db.lookup(ip)
+        expected = {
+          continent_code: "EU",
+          country_iso_code: "SE",
+          country_name_en: "Sweden"
+        }
+        actual = {
+          continent_code: result.get_value("continent", "code"),
+          country_iso_code: result.get_value("country", "iso_code"),
+          country_name_en: result.get_value("country", "names", "en")
+        }
+        assert_equal(expected, actual)
+      end
     end
 
-    data do
-      random_ip_data("::89.160.20.128/121")
-    end
-    test "Sweden" do |ip|
-      result = @db.lookup(ip)
-      expected = {
-        continent_code: "EU",
-        country_iso_code: "SE",
-        country_name_en: "Sweden"
-      }
-      actual = {
-        continent_code: result.get_value("continent", "code"),
-        country_iso_code: result.get_value("country", "iso_code"),
-        country_name_en: result.get_value("country", "names", "en")
-      }
-      assert_equal(expected, actual)
+    sub_test_case "with Symbol arguments" do
+      data do
+        random_ip_data("2001:218::/32")
+          .merge(random_ip_data("2001:240::/32"))
+      end
+      test "Japan" do |ip|
+        result = @db.lookup(ip)
+        expected = {
+          continent_code: "AS",
+          country_iso_code: "JP",
+          country_name_en: "Japan"
+        }
+        actual = {
+          continent_code: result.get_value(:continent, :code),
+          country_iso_code: result.get_value(:country, :iso_code),
+          country_name_en: result.get_value(:country, :names, :en)
+        }
+        assert_equal(expected, actual)
+      end
+
+      data do
+        random_ip_data("::89.160.20.128/121")
+      end
+      test "Sweden" do |ip|
+        result = @db.lookup(ip)
+        expected = {
+          continent_code: "EU",
+          country_iso_code: "SE",
+          country_name_en: "Sweden"
+        }
+        actual = {
+          continent_code: result.get_value(:continent, :code),
+          country_iso_code: result.get_value(:country, :iso_code),
+          country_name_en: result.get_value(:country, :names, :en)
+        }
+        assert_equal(expected, actual)
+      end
     end
   end
 end

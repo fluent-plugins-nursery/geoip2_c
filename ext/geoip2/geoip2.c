@@ -1,6 +1,7 @@
 #include <ruby.h>
 #include <ruby/encoding.h>
 #include <maxminddb.h>
+#include "rb_compat.h"
 
 VALUE rb_mGeoIP2;
 VALUE rb_cGeoIP2Database;
@@ -306,6 +307,16 @@ rb_geoip2_lr_initialize(VALUE self)
   return Qnil;
 }
 
+static inline char*
+rb_geoip2_lr_arg_convert_to_cstring(VALUE sym_or_str)
+{
+  if (TYPE(sym_or_str) == T_SYMBOL) {
+    return RSTRING_PTR(rb_sym2str(sym_or_str));
+  } else {
+    return StringValueCStr(sym_or_str);
+  }
+}
+
 static VALUE
 rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 {
@@ -321,7 +332,16 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   int status;
 
   rb_scan_args(argc, argv, "1*", &arg, &rest);
-  Check_Type(arg, T_STRING);
+  switch(TYPE(arg)) {
+    case T_STRING:
+    case T_SYMBOL:
+      {
+        break;
+      }
+    default:
+      rb_raise(rb_eArgError, "Expected a String or a Symbol");
+      break;
+  }
   path = malloc(sizeof(char *) * (RARRAY_LEN(rest) + 2));
 
   TypedData_Get_Struct(self,
@@ -329,11 +349,11 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
                        &rb_lookup_result_type,
                        result);
 
-  path[i] = StringValueCStr(arg);
+  path[i] = rb_geoip2_lr_arg_convert_to_cstring(arg);
   while (RARRAY_LEN(rest) != 0) {
     ++i;
     e = rb_ary_shift(rest);
-    tmp = StringValueCStr(e);
+    tmp = rb_geoip2_lr_arg_convert_to_cstring(e);
     path[i] = tmp;
   }
 
