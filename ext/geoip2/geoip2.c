@@ -27,9 +27,6 @@ static VALUE rb_geoip2_lr_initialize(VALUE self);
 static VALUE rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self);
 static VALUE rb_geoip2_lr_to_h(VALUE self);
 
-// static void lookup_result_free(void *pointer);
-// static size_t lookup_result_size(void *pointer);
-
 static const rb_data_type_t rb_mmdb_type = {
   "geoip2/mmdb", {
     0, mmdb_free, 0,
