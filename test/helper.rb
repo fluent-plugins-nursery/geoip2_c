@@ -4,6 +4,8 @@ require "test-unit"
 require "pathname"
 require "ipaddr"
 
+Bundler.require(:default)
+
 def base_dir
   Pathname(__dir__)
 end
