@@ -1,6 +1,6 @@
 # GeoIP2
 
-This gem provides binding [libmaxminddb](http://maxmind.github.io/libmaxminddb/).
+This gem provides binding of [libmaxminddb](http://maxmind.github.io/libmaxminddb/).
 
 This binding does not traverse all elements in lookup result by default.
 So you can get the element you want fast such as city name, country name or etc.
@@ -38,7 +38,8 @@ require "geoip2"
 
 db = GeoIP2::Databaes.new("/path/to/GeoLite2-City.mmdb")
 result = db.lookup("66.102.9.80")
-retuls.get_value("city", "names", "en") # => "Mountain View"
+retult.get_value("city", "names", "en") # => "Mountain View"
+retult.dig("city", "names", "en")       # => "Mountain View"
 ```
 
 ## Development
