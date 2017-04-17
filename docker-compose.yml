@@ -4,21 +4,21 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/Dockerfile-ruby2.3
-    command: ruby -run -e httpd .
+    command: tail -f /dev/null
     environment:
       - BUNDLE_GEMFILE=Gemfile
   test-ruby2.2:
     build:
       context: .
       dockerfile: dockerfiles/Dockerfile-ruby2.2
-    command: ruby -run -e httpd .
+    command: tail -f /dev/null
     environment:
       - BUNDLE_GEMFILE=gemfiles/ruby_2.2.gemfile
   test-ruby2.1:
     build:
       context: .
       dockerfile: dockerfiles/Dockerfile-ruby2.1
-    command: ruby -run -e httpd .
+    command: tail -f /dev/null
     environment:
       - BUNDLE_GEMFILE=gemfiles/ruby_2.1.gemfile
 
