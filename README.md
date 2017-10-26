@@ -8,19 +8,12 @@ So you can get the element you want fast such as city name, country name or etc.
 ## Requirements
 
 * Ruby 2.3 or later
-* libmaxminddb
 
 NOTE:
 
 This library uses `Hash#dig` and `Array#dig`.
 If you want to use this library with Ruby2.1 or Ruby2.2, you can install a gem which adds support `#dig` method.
 But I don't want to add extra dependency to this library, so I decided not to add extra dependency to support old Ruby versions.
-
-### libmaxminddb
-
-* Debian: [libmaxminddb](https://packages.debian.org/search?keywords=libmaxminddb&searchon=names&suite=all&section=all)
-* Ubuntu: [Ubuntu official package](http://packages.ubuntu.com/search?keywords=libmaxminddb&searchon=names&suite=all&section=all) or [PPA of MaxMind team](https://launchpad.net/~maxmind/+archive/ubuntu/ppa)
-* CentOS/Fedora: [rpms/libmaxminddb](https://admin.fedoraproject.org/pkgdb/package/rpms/libmaxminddb/)
 
 ## Installation
 
