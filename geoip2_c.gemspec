@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = ""
   spec.license       = "Apache-2.0"
 
-  spec.files         = `git ls-files -z`.split("\x0").reject do |f|
+  spec.files         = `git ls-files -z --recurse-submodules`.split("\x0").reject do |f|
     f.match(%r{^(test|spec|features|benchmark)/})
   end
   spec.bindir        = "bin"
