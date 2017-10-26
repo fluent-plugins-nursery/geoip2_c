@@ -403,9 +403,11 @@ rb_geoip2_lr_to_h(VALUE self)
   int status = 0;
   int exception = 0;
 
-  cache = rb_ivar_get(self, rb_intern("rb_hash"));
-  if (!NIL_P(cache)) {
-    return cache;
+  if (rb_ivar_defined(self, rb_intern("rb_hash")) == Qtrue) {
+    cache = rb_ivar_get(self, rb_intern("rb_hash"));
+    if (!NIL_P(cache)) {
+      return cache;
+    }
   }
 
   TypedData_Get_Struct(self,
