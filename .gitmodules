@@ -1,3 +1,6 @@
 [submodule "test/MaxMind-DB"]
 	path = test/MaxMind-DB
 	url = https://github.com/maxmind/MaxMind-DB.git
+[submodule "ext/geoip2/libmaxminddb"]
+	path = ext/geoip2/libmaxminddb
+	url = https://github.com/maxmind/libmaxminddb.git
