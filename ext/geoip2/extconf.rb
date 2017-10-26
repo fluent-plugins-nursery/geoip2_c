@@ -13,7 +13,7 @@ Dir.chdir(maxminddb_dir) do
   system("make")
 end
 
-header_dirs = [includedir]
+header_dirs = [includedir, "#{maxminddb_dir}/include"]
 lib_dirs = [libdir, "#{maxminddb_dir}/src/.libs"]
 
 dir_config("maxminddb", header_dirs, lib_dirs)
