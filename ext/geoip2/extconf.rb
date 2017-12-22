@@ -20,7 +20,7 @@ dir_config("maxminddb", header_dirs, lib_dirs)
 have_func("rb_sym2str", "ruby.h")
 
 $LDFLAGS << " -L#{maxminddb_dir}/src/.libs -lmaxminddb"
-$CFLAGS << " -std=c99 -fPIC -I#{maxminddb_dir}/src/.libs"
+$CFLAGS << " -std=c99 -fPIC -fms-extensions -I#{maxminddb_dir}/src/.libs"
 # $CFLAGS << " -g -O0"
 
 create_makefile("geoip2/geoip2")
