@@ -4,7 +4,7 @@ services:
 
 env:
   global:
-    DOCKER_COMPOSE_VERSION: 1.8.1
+    DOCKER_COMPOSE_VERSION: 1.18.0
   matrix:
     - TARGET_RUBY_VERSION=2.1
     - TARGET_RUBY_VERSION=2.2
