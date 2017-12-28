@@ -15,6 +15,22 @@ This library uses `Hash#dig` and `Array#dig`.
 If you want to use this library with Ruby2.1 or Ruby2.2, you can install a gem which adds support `#dig` method.
 But I don't want to add extra dependency to this library, so I decided not to add extra dependency to support old Ruby versions.
 
+## Build requirements
+
+Need ruby.h to build this extension, so you must install it before build this extension.
+
+Debian GNU Linux / Ubuntu:
+
+```
+$ sudo apt install -y build-essential automake autoconf libtool
+```
+
+CentOS:
+
+```
+$ sudo yum groupinstall -y "Development Tools"
+```
+
 ## Installation
 
 Add this line to your application's Gemfile:
