@@ -31,6 +31,8 @@ CentOS:
 $ sudo yum groupinstall -y "Development Tools"
 ```
 
+**NOTE**: If you want to use libmaxminddb provided as a deb/rpm package, you can install libmaxminddb-dev or libmaxminddb-devel at your own risk.
+
 ## Installation
 
 Add this line to your application's Gemfile:
