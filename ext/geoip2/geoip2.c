@@ -30,13 +30,15 @@ static VALUE rb_geoip2_lr_to_h(VALUE self);
 static const rb_data_type_t rb_mmdb_type = {
   "geoip2/mmdb", {
     0, mmdb_free, 0,
-  }, NULL, NULL
+  }, NULL, NULL,
+  RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static const rb_data_type_t rb_lookup_result_type = {
   "geoip2/lookup_result", {
-    0, 0, 0,
-  }, NULL, NULL
+    0, RUBY_DEFAULT_FREE, 0,
+  }, NULL, NULL,
+  RUBY_TYPED_FREE_IMMEDIATELY
 };
 
 static void
