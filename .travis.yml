@@ -11,6 +11,7 @@ env:
     - TARGET_RUBY_VERSION=2.3
     - TARGET_RUBY_VERSION=2.4
     - TARGET_RUBY_VERSION=2.5
+    - TARGET_RUBY_VERSION=2.6
 
 before_install:
   #- sudo apt-get update
