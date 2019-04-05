@@ -36,7 +36,7 @@ static const rb_data_type_t rb_mmdb_type = {
 
 static const rb_data_type_t rb_lookup_result_type = {
   "geoip2/lookup_result", {
-    0, 0, 0,
+    0, RUBY_DEFAULT_FREE, 0,
   }, NULL, NULL,
   RUBY_TYPED_FREE_IMMEDIATELY
 };
