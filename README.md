@@ -68,7 +68,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/okkez/geoip2_c.
+Bug reports and pull requests are welcome on GitHub at https://github.com/fluent-plugins-nursery/geoip2_c.
 
 ## License
 
