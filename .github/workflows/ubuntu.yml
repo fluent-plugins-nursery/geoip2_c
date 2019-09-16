@@ -19,7 +19,7 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           architecture: "x64"
-        run: |
+      - run: |
           apt update
           apt install -y -qq build-essential automake autoconf libtool
           bundle install --jobs 4 --retry 3
