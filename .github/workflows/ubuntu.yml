@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby:
+          - "2.6"
+          - "2.5"
+          - "2.4"
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          architecture: "x64"
+        run: |
+          apt update
+          apt install -y -qq build-essential automake autoconf libtool
+          bundle install --jobs 4 --retry 3
+          bundle exec rake compile
+          bundle exec rake test
