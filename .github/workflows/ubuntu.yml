@@ -1,4 +1,4 @@
-name: CI
+name: ubuntu
 
 on:
   - push
@@ -14,17 +14,19 @@ jobs:
           - "2.4"
     steps:
       - uses: actions/checkout@v1
+        submodules: true
       - name: Setup ruby
         uses: actions/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           architecture: "x64"
-      - run: |
+      - name: Install dependencies
+        run: |
           sudo apt-get update
           sudo apt-get install -y -qq build-essential automake autoconf libtool
-          ls -R ext
-          git submodule update -i
           gem install -N bundler
           bundle install --jobs 4 --retry 3
-          bundle exec rake compile
-          bundle exec rake test
+      - name: Build
+        run: bundle exec rake compile
+      - name: Run test
+        run: bundle exec rake test
