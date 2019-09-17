@@ -24,8 +24,8 @@ jobs:
       - name: Install dependencies
         run: |
           ruby -v
-          choco install msys2
-          pacman -Syu
+          ridk enable
+          pacman -Sy mingw-w64-x86_64-libmaxminddb
           gem install -N bundler
           bundle install --jobs 4 --retry 3
       - name: Build
