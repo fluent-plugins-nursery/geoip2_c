@@ -24,7 +24,8 @@ jobs:
       - name: Install dependencies
         run: |
           ruby -v
-          ridk
+          choco install msys2
+          pacman -Syu
           gem install -N bundler
           bundle install --jobs 4 --retry 3
       - name: Build
