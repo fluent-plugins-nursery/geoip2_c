@@ -22,6 +22,8 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install -y -qq build-essential automake autoconf libtool
+          ls -R ext
+          git submodule update -i
           gem install -N bundler
           bundle install --jobs 4 --retry 3
           bundle exec rake compile
