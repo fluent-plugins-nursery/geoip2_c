@@ -22,9 +22,9 @@ before_script:
   - docker-compose build test-ruby${TARGET_RUBY_VERSION}
   - docker-compose ps
   - docker-compose up -d test-ruby${TARGET_RUBY_VERSION}
+  - docker-compose exec test-ruby${TARGET_RUBY_VERSION} gem install bundler:2.2.0
   - docker-compose exec test-ruby${TARGET_RUBY_VERSION} bundle install
   - docker-compose exec test-ruby${TARGET_RUBY_VERSION} bundle exec rake compile
 
 script:
   - docker-compose exec test-ruby${TARGET_RUBY_VERSION} bundle exec rake test
-
