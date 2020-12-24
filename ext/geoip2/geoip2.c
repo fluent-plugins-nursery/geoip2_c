@@ -396,6 +396,19 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 }
 
 static VALUE
+rb_geoip2_lr_netmask(VALUE self)
+{
+  MMDB_lookup_result_s *result = NULL;
+
+  TypedData_Get_Struct(self,
+                       struct MMDB_lookup_result_s,
+                       &rb_lookup_result_type,
+                       result);
+
+  return UINT2NUM(result->netmask);
+}
+
+static VALUE
 rb_geoip2_lr_to_h(VALUE self)
 {
   MMDB_lookup_result_s *result = NULL;
@@ -449,5 +462,6 @@ Init_geoip2(void)
   rb_define_alloc_func(rb_cGeoIP2LookupResult, rb_geoip2_lr_alloc);
   rb_define_method(rb_cGeoIP2LookupResult, "initialize", rb_geoip2_lr_initialize, 0);
   rb_define_method(rb_cGeoIP2LookupResult, "get_value", rb_geoip2_lr_get_value, -1);
+  rb_define_method(rb_cGeoIP2LookupResult, "netmask", rb_geoip2_lr_netmask, 0);
   rb_define_method(rb_cGeoIP2LookupResult, "to_h", rb_geoip2_lr_to_h, 0);
 }

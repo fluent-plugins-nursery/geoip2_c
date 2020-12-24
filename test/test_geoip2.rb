@@ -123,6 +123,7 @@ class GeoIP2Test < Test::Unit::TestCase
         "is_anonymous_vpn" => true
       }
       assert_equal(expected, result.to_h)
+      assert_equal(112, result.netmask)
     end
 
     data do
@@ -135,6 +136,7 @@ class GeoIP2Test < Test::Unit::TestCase
         "is_tor_exit_node" => true
       }
       assert_equal(expected, result.to_h)
+      assert_equal(109, result.netmask)
     end
   end
 
