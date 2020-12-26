@@ -450,8 +450,8 @@ void
 Init_geoip2(void)
 {
   rb_mGeoIP2 = rb_define_module("GeoIP2");
-  rb_cGeoIP2Database = rb_define_class_under(rb_mGeoIP2, "Database", rb_cData);
-  rb_cGeoIP2LookupResult = rb_define_class_under(rb_mGeoIP2, "LookupResult", rb_cData);
+  rb_cGeoIP2Database = rb_define_class_under(rb_mGeoIP2, "Database", rb_cObject);
+  rb_cGeoIP2LookupResult = rb_define_class_under(rb_mGeoIP2, "LookupResult", rb_cObject);
   rb_eGeoIP2Error = rb_define_class_under(rb_mGeoIP2, "Error", rb_eStandardError);
 
   rb_define_alloc_func(rb_cGeoIP2Database, rb_geoip2_db_alloc);
