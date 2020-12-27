@@ -2,6 +2,7 @@ name: windows
 
 on:
   - push
+  - pull_request
 
 jobs:
   build:
@@ -9,25 +10,28 @@ jobs:
     strategy:
       matrix:
         ruby:
+          #- "3.0"
+          - "2.7"
           - "2.6"
           - "2.5"
           - "2.4"
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
         with:
           submodules: true
-      - name: Setup ruby
-        uses: actions/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          architecture: "x64"
       - name: Install dependencies
         run: |
-          ruby -v
           ridk enable
-          pacman -Sy mingw-w64-x86_64-libmaxminddb
-          gem install -N bundler
-          bundle install --jobs 4 --retry 3
+          pacman -Sy --noconfirm mingw-w64-x86_64-libmaxminddb
+      - name: Setup ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler: latest
+          bundler-cache: true
+      - name: Check Ruby version
+        run: |
+          ruby -v
       - name: Build
         run: |
           ridk enable
