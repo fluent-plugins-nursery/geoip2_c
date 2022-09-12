@@ -418,8 +418,9 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
     VALUE array = rb_ary_new();
     VALUE hash;
     VALUE val;
+    bool symbolize_keys = RTEST(rb_iv_get(self, "@symbolize_keys"));
     for (int j = 0; path[j] != NULL; j++) {
-      rb_ary_push(array, rb_str_new_cstr(path[j]));
+      rb_ary_push(array, symbolize_keys ? ID2SYM(rb_intern(path[j])) : rb_str_new_cstr(path[j]));
     }
     hash = rb_funcall(self, rb_intern("to_h"), 0);
     val = rb_apply(hash, rb_intern("dig"), array);
