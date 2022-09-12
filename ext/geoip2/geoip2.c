@@ -15,10 +15,11 @@ static void mmdb_free(void *mmdb);
 static MMDB_lookup_result_s mmdb_lookup(MMDB_s *mmdb, const char *ip_str, bool cleanup);
 static VALUE mmdb_entry_data_decode(MMDB_entry_data_s *entry_data);
 static VALUE mmdb_guard_parse_entry_data_list(VALUE ptr);
-static MMDB_entry_data_list_s *mmdb_parse_entry_data_list(MMDB_entry_data_list_s *data_list, VALUE *obj);
+static MMDB_entry_data_list_s *mmdb_parse_entry_data_list(MMDB_entry_data_list_s *data_list, bool symbolize_keys, VALUE *obj);
 
 static VALUE rb_geoip2_db_alloc(VALUE klass);
-static VALUE rb_geoip2_db_initialize(VALUE self, VALUE path);
+static VALUE rb_geoip2_db_initialize(int argc, VALUE* argv, VALUE self);
+
 static VALUE rb_geoip2_db_close(VALUE self);
 static VALUE rb_geoip2_db_lookup(VALUE self, VALUE ip);
 
@@ -26,6 +27,11 @@ static VALUE rb_geoip2_lr_alloc(VALUE klass);
 static VALUE rb_geoip2_lr_initialize(VALUE self);
 static VALUE rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self);
 static VALUE rb_geoip2_lr_to_h(VALUE self);
+
+typedef struct {
+  struct MMDB_entry_data_list_s* data_list;
+  bool symbolize_keys;
+} ParseRequest;
 
 static const rb_data_type_t rb_mmdb_type = {
   "geoip2/mmdb", {
@@ -158,18 +164,35 @@ mmdb_entry_data_decode(MMDB_entry_data_s *entry_data)
 }
 
 static VALUE
+mmdb_entry_data_decode_key(MMDB_entry_data_s *entry_data, bool symbolize_strings)
+{
+  if (entry_data->type != MMDB_DATA_TYPE_UTF8_STRING) {
+    rb_raise(rb_eGeoIP2Error, "Unexpected key type: %d", entry_data->type);
+  }
+  if (symbolize_strings) {
+    return ID2SYM(rb_intern3(entry_data->utf8_string,
+                             entry_data->data_size,
+                             rb_utf8_encoding()));
+  } else {
+    return rb_enc_str_new(entry_data->utf8_string,
+                          entry_data->data_size,
+                          rb_utf8_encoding());
+  }
+}
+
+static VALUE
 mmdb_guard_parse_entry_data_list(VALUE ptr)
 {
-  MMDB_entry_data_list_s *data_list =
-    (struct MMDB_entry_data_list_s *)ptr;
+  MMDB_entry_data_list_s *data_list = ((ParseRequest *)ptr)->data_list;
+  bool symbolize_keys = ((ParseRequest *)ptr)->symbolize_keys;
   VALUE obj;
 
-  mmdb_parse_entry_data_list(data_list, &obj);
+  mmdb_parse_entry_data_list(data_list, symbolize_keys, &obj);
   return obj;
 }
 
 static MMDB_entry_data_list_s *
-mmdb_parse_entry_data_list(MMDB_entry_data_list_s *data_list, VALUE *obj)
+mmdb_parse_entry_data_list(MMDB_entry_data_list_s *data_list, bool symbolize_keys, VALUE *obj)
 {
   switch (data_list->entry_data.type) {
   case MMDB_DATA_TYPE_MAP:
@@ -179,9 +202,9 @@ mmdb_parse_entry_data_list(MMDB_entry_data_list_s *data_list, VALUE *obj)
       for (data_list = data_list->next; data_size && data_list; data_size--) {
         VALUE key;
         VALUE val;
-        key = mmdb_entry_data_decode(&data_list->entry_data);
+        key = mmdb_entry_data_decode_key(&data_list->entry_data, symbolize_keys);
         data_list = data_list->next;
-        data_list = mmdb_parse_entry_data_list(data_list, &val);
+        data_list = mmdb_parse_entry_data_list(data_list, symbolize_keys, &val);
         rb_hash_aset(hash, key, val);
       }
       *obj = hash;
@@ -193,7 +216,7 @@ mmdb_parse_entry_data_list(MMDB_entry_data_list_s *data_list, VALUE *obj)
       VALUE array = rb_ary_new();
       for (data_list = data_list->next; data_size && data_list; data_size--) {
         VALUE val;
-        data_list = mmdb_parse_entry_data_list(data_list, &val);
+        data_list = mmdb_parse_entry_data_list(data_list, symbolize_keys, &val);
         rb_ary_push(array, val);
       }
       *obj = array;
@@ -233,10 +256,20 @@ rb_geoip2_db_alloc(VALUE klass)
 }
 
 static VALUE
-rb_geoip2_db_initialize(VALUE self, VALUE path)
+rb_geoip2_db_initialize(int argc, VALUE* argv, VALUE self)
 {
+  VALUE path;
+  VALUE opts;
+  VALUE symbolize_keys;
   char *db_path;
   MMDB_s *mmdb;
+  ID keyword_ids[1];
+  keyword_ids[0] = rb_intern("symbolize_keys");
+
+  rb_scan_args(argc, argv, "1:", &path, &opts);
+  if (NIL_P(opts)) opts = rb_hash_new();
+  rb_get_kwargs(opts, keyword_ids, 0, 1, &symbolize_keys);
+  rb_iv_set(self, "@symbolize_keys", symbolize_keys);
 
   Check_Type(path, T_STRING);
 
@@ -288,6 +321,9 @@ rb_geoip2_db_lookup(VALUE self, VALUE ip)
   result_ptr->found_entry = result.found_entry;
   result_ptr->entry = result.entry;
   result_ptr->netmask = result.netmask;
+
+  rb_iv_set(obj, "@symbolize_keys", rb_iv_get(self, "@symbolize_keys"));
+
   return obj;
 }
 
@@ -434,7 +470,9 @@ rb_geoip2_lr_to_h(VALUE self)
     rb_raise(rb_eGeoIP2Error, "%s", MMDB_strerror(status));
   }
 
-  hash = rb_protect(mmdb_guard_parse_entry_data_list, (VALUE)entry_data_list, &exception);
+  ParseRequest parse_request = { entry_data_list, RTEST(rb_iv_get(self, "@symbolize_keys")) };
+
+  hash = rb_protect(mmdb_guard_parse_entry_data_list, (VALUE)&parse_request, &exception);
   MMDB_free_entry_data_list(entry_data_list);
 
   if (exception != 0) {
@@ -455,7 +493,7 @@ Init_geoip2(void)
   rb_eGeoIP2Error = rb_define_class_under(rb_mGeoIP2, "Error", rb_eStandardError);
 
   rb_define_alloc_func(rb_cGeoIP2Database, rb_geoip2_db_alloc);
-  rb_define_method(rb_cGeoIP2Database, "initialize", rb_geoip2_db_initialize, 1);
+  rb_define_method(rb_cGeoIP2Database, "initialize", rb_geoip2_db_initialize, -1);
   rb_define_method(rb_cGeoIP2Database, "close", rb_geoip2_db_close, 0);
   rb_define_method(rb_cGeoIP2Database, "lookup", rb_geoip2_db_lookup, 1);
 
