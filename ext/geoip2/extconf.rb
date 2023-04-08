@@ -14,10 +14,10 @@ if !File.directory?(maxminddb_dir) ||
 end
 
 Dir.chdir(maxminddb_dir) do
-  system("./bootstrap")
-  system({ "CFLAGS" => "-fPIC" }, "./configure", "--disable-shared", "--disable-tests")
-  system("make", "clean")
-  system("make")
+  system("./bootstrap") or fail "Couldn't run maxminddb `bootstrap`"
+  system({ "CFLAGS" => "-fPIC" }, "./configure", "--disable-shared", "--disable-tests") or fail "Couldn't run maxminddb `configure`"
+  system("make", "clean") or fail "Couldn't run maxminddb `make clean`"
+  system("make") or fail "Couldn't run maxminddb `make`"
 end
 
 header_dirs = [includedir, "#{maxminddb_dir}/include"]
