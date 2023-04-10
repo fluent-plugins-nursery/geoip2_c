@@ -256,20 +256,10 @@ rb_geoip2_db_alloc(VALUE klass)
 }
 
 static VALUE
-rb_geoip2_db_initialize(int argc, VALUE* argv, VALUE self)
+rb_geoip2_db_open_mmdb(VALUE self, VALUE path)
 {
-  VALUE path;
-  VALUE opts;
-  VALUE symbolize_keys;
   char *db_path;
   MMDB_s *mmdb;
-  ID keyword_ids[1];
-  keyword_ids[0] = rb_intern("symbolize_keys");
-
-  rb_scan_args(argc, argv, "1:", &path, &opts);
-  if (NIL_P(opts)) opts = rb_hash_new();
-  rb_get_kwargs(opts, keyword_ids, 0, 1, &symbolize_keys);
-  rb_iv_set(self, "@symbolize_keys", symbolize_keys);
 
   Check_Type(path, T_STRING);
 
@@ -494,7 +484,7 @@ Init_geoip2(void)
   rb_eGeoIP2Error = rb_define_class_under(rb_mGeoIP2, "Error", rb_eStandardError);
 
   rb_define_alloc_func(rb_cGeoIP2Database, rb_geoip2_db_alloc);
-  rb_define_method(rb_cGeoIP2Database, "initialize", rb_geoip2_db_initialize, -1);
+  rb_define_method(rb_cGeoIP2Database, "open_mmdb", rb_geoip2_db_open_mmdb, 1);
   rb_define_method(rb_cGeoIP2Database, "close", rb_geoip2_db_close, 0);
   rb_define_method(rb_cGeoIP2Database, "lookup", rb_geoip2_db_lookup, 1);
 
