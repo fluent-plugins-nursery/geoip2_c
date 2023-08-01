@@ -33,7 +33,7 @@ jobs:
       - name: Build
         run: |
           ridk enable
-          bundle exec rake compile || ruby -e 'Dir["**/mkmf.log"].each {|f| puts f; puts File.read(f) }'
+          bundle exec rake compile || ruby -e "Dir[\"**/mkmf.log\"].each {|f| puts f; puts File.read(f) }"
       - name: Run test
         run: |
           ridk enable
