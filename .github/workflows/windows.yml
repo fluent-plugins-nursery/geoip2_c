@@ -36,7 +36,7 @@ jobs:
       - name: Build
         run: |
           ridk enable
-          bundle exec rake compile
+          bundle exec rake compile || bundle exec ruby -e 'Dir.glob("**/mkmf.log") {|f| puts f; puts File.read(f) }'
       - name: Run test
         run: |
           ridk enable
