@@ -27,9 +27,9 @@ def mmdb_source_data(name)
 end
 
 def random_ip_addresses(address_mask, n = 10)
-  IPAddr.new(address_mask).to_range.lazy.select {
-    rand(1000) % 7 == 0
-  }.first(n * 100).sample(n)
+  IPAddr.new(address_mask).to_range.each_with_index.lazy.select { |ip, i|
+    i % 7 == 0
+  }.first(n * 100).sample(n).map(&:first)
 end
 
 def random_ip_data(address_mask, n = 10)

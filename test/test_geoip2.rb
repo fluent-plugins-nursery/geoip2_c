@@ -140,6 +140,47 @@ class GeoIP2Test < Test::Unit::TestCase
     end
   end
 
+  sub_test_case "with symbolize_keys" do
+    setup do
+      @db = GeoIP2::Database.new(mmdb_test_data("GeoIP2-City-Test.mmdb"), symbolize_keys: true)
+    end
+
+    teardown do
+      @db.close
+    end
+
+    data do
+      random_ip_data("::81.2.69.142/127")
+    end
+
+    test "London" do |ip|
+      result = @db.lookup(ip).to_h
+      expected = {
+        geoname_id: 2643743,
+        names: {
+         de: "London",
+         en: "London",
+         es: "Londres",
+         fr: "Londres",
+         ja: "ロンドン",
+         "pt-BR": "Londres",
+         ru: "Лондон"
+        }
+      }
+      assert_equal(expected, result[:city])
+    end
+
+    test "get_value still works with string-keys" do
+      result = @db.lookup("81.2.69.142")
+      assert_instance_of(Hash, result.get_value("city", "names"))
+    end
+
+    test "get_value still works with symbol-keys" do
+      result = @db.lookup("81.2.69.142")
+      assert_instance_of(Hash, result.get_value(:city, :names))
+    end
+  end
+
   sub_test_case "connection type" do
     setup do
       @db = GeoIP2::Database.new(mmdb_test_data("GeoIP2-Connection-Type-Test.mmdb"))

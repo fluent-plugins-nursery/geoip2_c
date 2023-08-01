@@ -5,12 +5,19 @@ libdir = RbConfig::CONFIG["libdir"]
 includedir = RbConfig::CONFIG["includedir"]
 
 maxminddb_dir = File.expand_path(File.join(__dir__, "libmaxminddb"))
+gem_root = File.expand_path('..', __dir__)
+
+if !File.directory?(maxminddb_dir) ||
+   # '.', '..', and possibly '.git' from a failed checkout:
+   Dir.entries(maxminddb_dir).size <= 3
+  Dir.chdir(gem_root) { system('git submodule update --init') } or fail 'Could not fetch maxminddb'
+end
 
 Dir.chdir(maxminddb_dir) do
-  system("./bootstrap")
-  system({ "CFLAGS" => "-fPIC" }, "./configure", "--disable-shared", "--disable-tests")
-  system("make", "clean")
-  system("make")
+  system("./bootstrap") or fail "Couldn't run maxminddb `bootstrap`"
+  system({ "CFLAGS" => "-fPIC" }, "./configure", "--disable-shared", "--disable-tests") or fail "Couldn't run maxminddb `configure`"
+  system("make", "clean") or fail "Couldn't run maxminddb `make clean`"
+  system("make") or fail "Couldn't run maxminddb `make`"
 end
 
 header_dirs = [includedir, "#{maxminddb_dir}/include"]
