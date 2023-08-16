@@ -45,7 +45,7 @@ jobs:
       - name: Build
         run: |
           ridk enable
-          bundle exec rake compile || ruby -e "Dir[%q(**/mkmf.log)].each {|f| puts f; puts File.read(f) }"
+          bundle exec rake compile
       - name: Run test
         run: |
           ridk enable
