@@ -5,15 +5,9 @@ This gem provides binding of [libmaxminddb](http://maxmind.github.io/libmaxmindd
 This binding does not traverse all elements in lookup result by default.
 So you can get the element you want fast such as city name, country name or etc.
 
-## Requirements
+## Supported Ruby versions
 
-* Ruby 2.3 or later
-
-NOTE:
-
-This library uses `Hash#dig` and `Array#dig`.
-If you want to use this library with Ruby2.1 or Ruby2.2, you can install a gem which adds support `#dig` method.
-But I don't want to add extra dependency to this library, so I decided not to add extra dependency to support old Ruby versions.
+See [workflows](https://github.com/fluent-plugins-nursery/geoip2_c/blob/master/.github/workflows/ubuntu.yml)
 
 ## Build requirements
 
