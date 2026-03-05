@@ -40,7 +40,7 @@ jobs:
         run: |
           ruby -v
       - name: Add Fiddle 1.1.0
-        if: ${{ matrix.ruby == "3.0.3" }}
+        if: ${{ matrix.ruby == '3.0.3' }}
         run: gem install fiddle --version 1.1.0
       - name: Build
         run: |
