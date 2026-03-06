@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.extensions    = ["ext/geoip2/extconf.rb"]
 
+  spec.add_dependency('mini_portile2', '~> 2.8')
   spec.add_development_dependency "appraisal"
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake"
