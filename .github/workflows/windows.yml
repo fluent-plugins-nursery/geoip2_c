@@ -1,17 +1,27 @@
 name: windows
 
 on:
-  - push
-  - pull_request
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '0 0 1 * *'
 
 jobs:
+  ruby-versions:
+    uses: ruby/actions/.github/workflows/ruby_versions.yml@master
+    with:
+      engine: cruby
+      min_version: 3.1
   build:
+    needs: ruby-versions
     runs-on: windows-latest
     strategy:
       matrix:
-        ruby:
-          - "3.2"
-          - "3.1"
+        ruby: ${{ fromJson(needs.ruby-versions.outputs.versions) }}
+        exclude:
+          - ruby: head
         include:
           - ruby: "3.0.3"
             # On Ruby 3.0, we need to use fiddle 1.0.8 or later to retrieve correct
