@@ -33,7 +33,7 @@ jobs:
             # * https://github.com/oneclick/rubyinstaller2/blob/8225034c22152d8195bc0aabc42a956c79d6c712/lib/ruby_installer/build/dll_directory.rb
             ruby-lib-opt: RUBYLIB=%RUNNER_TOOL_CACHE%/Ruby/3.0.3/x64/lib/ruby/gems/3.0.0/gems/fiddle-1.1.0/lib
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           submodules: true
       - name: Install dependencies
@@ -41,7 +41,7 @@ jobs:
           ridk enable
           pacman -Sy --noconfirm mingw-w64-x86_64-libmaxminddb
       - name: Setup ruby
-        uses: ruby/setup-ruby@afeafc3d1ab54a631816aba4c914a0081c12ff2f # v1.310.0
+        uses: ruby/setup-ruby@0dafeac902942906541bc140009cdbf32665b601 # v1.315.0
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler: latest
