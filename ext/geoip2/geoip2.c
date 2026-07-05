@@ -382,6 +382,7 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   VALUE arg;
   VALUE rest;
   char **path;
+  VALUE path_tmp;
   int i = 0;
   LookupResult *result = NULL;
   MMDB_entry_s entry;
@@ -389,6 +390,7 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   char *tmp;
   VALUE e;
   int status;
+  VALUE val;
 
   rb_scan_args(argc, argv, "1*", &arg, &rest);
   switch(TYPE(arg)) {
@@ -404,7 +406,11 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 
   result = lookup_result_get_open(self);
 
-  path = malloc(sizeof(char *) * (RARRAY_LEN(rest) + 2));
+  /* ALLOCV_N ties the allocation to path_tmp: it is released automatically even
+   * if a later key conversion raises (e.g. a non-String key, or a String with
+   * an embedded NUL that makes StringValueCStr raise), and it raises
+   * NoMemoryError instead of returning NULL on allocation failure. */
+  path = ALLOCV_N(char *, path_tmp, RARRAY_LEN(rest) + 2);
 
   path[i] = rb_geoip2_lr_arg_convert_to_cstring(arg);
   while (RARRAY_LEN(rest) != 0) {
@@ -421,13 +427,13 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   status = MMDB_aget_value(&entry, &entry_data, (const char *const *const)path);
 
   if (status != MMDB_SUCCESS) {
-    free(path);
     /* fprintf(stderr, "%s:%s\n", __FUNCTION__, MMDB_strerror(status)); */
+    ALLOCV_END(path_tmp);
     return Qnil;
   }
 
   if (!entry_data.has_data) {
-    free(path);
+    ALLOCV_END(path_tmp);
     return Qnil;
   }
 
@@ -436,19 +442,19 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
     // FIXME optimize below code
     VALUE array = rb_ary_new();
     VALUE hash;
-    VALUE val;
     bool symbolize_keys = RTEST(rb_iv_get(self, "@symbolize_keys"));
     for (int j = 0; path[j] != NULL; j++) {
       rb_ary_push(array, symbolize_keys ? ID2SYM(rb_intern(path[j])) : rb_str_new_cstr(path[j]));
     }
     hash = rb_funcall(self, rb_intern("to_h"), 0);
     val = rb_apply(hash, rb_intern("dig"), array);
-    free(path);
+    ALLOCV_END(path_tmp);
     return val;
   }
 
-  free(path);
-  return mmdb_entry_data_decode(&entry_data);
+  val = mmdb_entry_data_decode(&entry_data);
+  ALLOCV_END(path_tmp);
+  return val;
 }
 
 static VALUE
