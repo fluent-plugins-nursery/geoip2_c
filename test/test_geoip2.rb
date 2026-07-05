@@ -45,6 +45,30 @@ class GeoIP2Test < Test::Unit::TestCase
     end
   end
 
+  sub_test_case "get_value with invalid keys" do
+    setup do
+      @db = GeoIP2::Database.new(mmdb_test_data("GeoIP2-City-Test.mmdb"))
+      @result = @db.lookup("81.2.69.142")
+    end
+
+    teardown do
+      @db.close
+    end
+
+    test "a String key with an embedded NUL raises ArgumentError" do
+      assert_raise(ArgumentError) { @result.get_value("city", "na\x00me") }
+    end
+
+    test "a non-String / non-Symbol key raises" do
+      assert_raise(TypeError) { @result.get_value("city", 123) }
+    end
+
+    test "raising on an invalid key does not affect later lookups" do
+      assert_raise(ArgumentError) { @result.get_value("bad\x00key") }
+      assert_equal("London", @result.get_value("city", "names", "en"))
+    end
+  end
+
   sub_test_case "city" do
     setup do
       @db = GeoIP2::Database.new(mmdb_test_data("GeoIP2-City-Test.mmdb"))
