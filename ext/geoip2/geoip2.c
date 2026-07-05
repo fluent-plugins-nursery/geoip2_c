@@ -297,6 +297,14 @@ rb_geoip2_db_open_mmdb(VALUE self, VALUE path)
   db_path = StringValueCStr(path);
 
   TypedData_Get_Struct(self, struct MMDB_s, &rb_mmdb_type, mmdb);
+
+  /* Reopening over an already-open database would overwrite the MMDB_s in
+   * place and leak libmaxminddb's internal allocations (and the previous
+   * mmap). Close the current database first. */
+  if (!mmdb_is_closed(mmdb)) {
+    mmdb_close(mmdb);
+  }
+
   mmdb_open(db_path, mmdb);
 
   return Qnil;
