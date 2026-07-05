@@ -45,6 +45,16 @@ class GeoIP2Test < Test::Unit::TestCase
     end
   end
 
+  sub_test_case "reopening a database" do
+    test "open_mmdb can be called again and stays usable" do
+      path = mmdb_test_data("GeoIP2-City-Test.mmdb")
+      db = GeoIP2::Database.new(path)
+      10.times { db.open_mmdb(path) }
+      assert_equal("London", db.lookup("81.2.69.142").get_value("city", "names", "en"))
+      db.close
+    end
+  end
+
   sub_test_case "get_value with invalid keys" do
     setup do
       @db = GeoIP2::Database.new(mmdb_test_data("GeoIP2-City-Test.mmdb"))
