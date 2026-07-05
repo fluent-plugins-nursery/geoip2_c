@@ -172,10 +172,20 @@ mmdb_entry_data_decode(MMDB_entry_data_s *entry_data)
   case MMDB_DATA_TYPE_UINT64:
     return UINT2NUM(entry_data->uint64);
   case MMDB_DATA_TYPE_UINT128:
+    /* uint128 does not fit in a C unsigned long, so build the Integer from the
+     * full 128 bits instead of truncating it through UINT2NUM. */
 #if !(MMDB_UINT128_IS_BYTE_ARRAY)
-    return UINT2NUM(entry_data->uint128);
+    {
+      mmdb_uint128_t value = entry_data->uint128;
+      return rb_integer_unpack(&value, 1, sizeof(value), 0,
+                               INTEGER_PACK_NATIVE_BYTE_ORDER |
+                               INTEGER_PACK_LSWORD_FIRST);
+    }
 #else
-    rb_raise(rb_eNotImpError, "TODO: unit8_t[16] -> Integer");
+    /* entry_data->uint128 is a big-endian uint8_t[16]. */
+    return rb_integer_unpack(entry_data->uint128, 16, 1, 0,
+                             INTEGER_PACK_BIG_ENDIAN |
+                             INTEGER_PACK_MSWORD_FIRST);
 #endif
   case MMDB_DATA_TYPE_ARRAY:
     /* TODO: not implemented */

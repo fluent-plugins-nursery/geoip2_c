@@ -55,6 +55,16 @@ class GeoIP2Test < Test::Unit::TestCase
     end
   end
 
+  sub_test_case "uint128 decoding" do
+    # The decoder test database stores 2**120 in the "uint128" field; its low
+    # 64 bits are zero, so a truncating decode would wrongly return 0.
+    test "a uint128 larger than 2**64 is returned without truncation" do
+      db = GeoIP2::Database.new(mmdb_test_data("MaxMind-DB-test-decoder.mmdb"))
+      assert_equal(2**120, db.lookup("1.1.1.1").get_value("uint128"))
+      db.close
+    end
+  end
+
   sub_test_case "get_value with invalid keys" do
     setup do
       @db = GeoIP2::Database.new(mmdb_test_data("GeoIP2-City-Test.mmdb"))
