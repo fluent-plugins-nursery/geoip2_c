@@ -18,6 +18,33 @@ class GeoIP2Test < Test::Unit::TestCase
     end
   end
 
+  sub_test_case "lifetime safety" do
+    def city_db
+      GeoIP2::Database.new(mmdb_test_data("GeoIP2-City-Test.mmdb"))
+    end
+
+    test "using a result after the database is closed raises, not crashes" do
+      db = city_db
+      result = db.lookup("81.2.69.142")
+      db.close
+      assert_raise(GeoIP2::Error) { result.to_h }
+      assert_raise(GeoIP2::Error) { result.get_value("city", "names", "en") }
+    end
+
+    test "result keeps its database alive across GC" do
+      result = nil
+      1.times do
+        db = city_db
+        result = db.lookup("81.2.69.142")
+      end
+      GC.start
+      GC.start
+      # The database is unreferenced by user code but must not be collected
+      # while a lookup result derived from it is still alive.
+      assert_equal("London", result.get_value("city", "names", "en"))
+    end
+  end
+
   sub_test_case "city" do
     setup do
       @db = GeoIP2::Database.new(mmdb_test_data("GeoIP2-City-Test.mmdb"))

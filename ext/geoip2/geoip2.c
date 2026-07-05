@@ -33,6 +33,23 @@ typedef struct {
   bool symbolize_keys;
 } ParseRequest;
 
+/* A LookupResult holds a copy of the libmaxminddb lookup result (whose
+ * entry.mmdb points into the owning Database's MMDB_s) together with a
+ * reference to that Database VALUE. Keeping the reference and marking it
+ * prevents the Database (and its mmap'd file) from being freed while a
+ * LookupResult derived from it is still alive. */
+typedef struct {
+  MMDB_lookup_result_s result;
+  VALUE db;
+} LookupResult;
+
+static void
+lookup_result_mark(void *ptr)
+{
+  LookupResult *lr = (LookupResult *)ptr;
+  rb_gc_mark(lr->db);
+}
+
 static const rb_data_type_t rb_mmdb_type = {
   "geoip2/mmdb", {
     0, mmdb_free, 0,
@@ -42,10 +59,24 @@ static const rb_data_type_t rb_mmdb_type = {
 
 static const rb_data_type_t rb_lookup_result_type = {
   "geoip2/lookup_result", {
-    0, RUBY_DEFAULT_FREE, 0,
+    lookup_result_mark, RUBY_DEFAULT_FREE, 0,
   }, NULL, NULL,
   RUBY_TYPED_FREE_IMMEDIATELY
 };
+
+/* Fetch the LookupResult and ensure its backing database is still usable.
+ * Raises rather than dereferencing a freed/unmapped MMDB_s (use-after-free). */
+static LookupResult *
+lookup_result_get_open(VALUE self)
+{
+  LookupResult *lr;
+  TypedData_Get_Struct(self, LookupResult, &rb_lookup_result_type, lr);
+  if (lr->result.entry.mmdb == NULL ||
+      mmdb_is_closed((MMDB_s *)lr->result.entry.mmdb)) {
+    rb_raise(rb_eGeoIP2Error, "the database is closed");
+  }
+  return lr;
+}
 
 static void
 mmdb_open(const char *db_path, MMDB_s *mmdb)
@@ -291,7 +322,7 @@ rb_geoip2_db_lookup(VALUE self, VALUE ip)
   char *ip_str;
   MMDB_s *mmdb;
   MMDB_lookup_result_s result;
-  MMDB_lookup_result_s *result_ptr;
+  LookupResult *result_ptr;
   VALUE obj;
 
   Check_Type(ip, T_STRING);
@@ -305,12 +336,11 @@ rb_geoip2_db_lookup(VALUE self, VALUE ip)
   }
 
   obj = TypedData_Make_Struct(rb_cGeoIP2LookupResult,
-                              struct MMDB_lookup_result_s,
+                              LookupResult,
                               &rb_lookup_result_type,
                               result_ptr);
-  result_ptr->found_entry = result.found_entry;
-  result_ptr->entry = result.entry;
-  result_ptr->netmask = result.netmask;
+  result_ptr->result = result;
+  result_ptr->db = self;
 
   rb_iv_set(obj, "@symbolize_keys", rb_iv_get(self, "@symbolize_keys"));
 
@@ -321,11 +351,12 @@ static VALUE
 rb_geoip2_lr_alloc(VALUE klass)
 {
   VALUE obj;
-  MMDB_lookup_result_s *result;
+  LookupResult *result;
   obj = TypedData_Make_Struct(klass,
-                              struct MMDB_lookup_result_s,
+                              LookupResult,
                               &rb_lookup_result_type,
                               result);
+  result->db = Qnil;
   return obj;
 }
 
@@ -352,7 +383,7 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
   VALUE rest;
   char **path;
   int i = 0;
-  MMDB_lookup_result_s *result = NULL;
+  LookupResult *result = NULL;
   MMDB_entry_s entry;
   MMDB_entry_data_s entry_data;
   char *tmp;
@@ -370,12 +401,10 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
       rb_raise(rb_eArgError, "Expected a String or a Symbol");
       break;
   }
-  path = malloc(sizeof(char *) * (RARRAY_LEN(rest) + 2));
 
-  TypedData_Get_Struct(self,
-                       struct MMDB_lookup_result_s,
-                       &rb_lookup_result_type,
-                       result);
+  result = lookup_result_get_open(self);
+
+  path = malloc(sizeof(char *) * (RARRAY_LEN(rest) + 2));
 
   path[i] = rb_geoip2_lr_arg_convert_to_cstring(arg);
   while (RARRAY_LEN(rest) != 0) {
@@ -387,7 +416,7 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 
   path[i+1] = NULL;
 
-  entry = result->entry;
+  entry = result->result.entry;
 
   status = MMDB_aget_value(&entry, &entry_data, (const char *const *const)path);
 
@@ -425,20 +454,20 @@ rb_geoip2_lr_get_value(int argc, VALUE *argv, VALUE self)
 static VALUE
 rb_geoip2_lr_netmask(VALUE self)
 {
-  MMDB_lookup_result_s *result = NULL;
+  LookupResult *result = NULL;
 
   TypedData_Get_Struct(self,
-                       struct MMDB_lookup_result_s,
+                       LookupResult,
                        &rb_lookup_result_type,
                        result);
 
-  return UINT2NUM(result->netmask);
+  return UINT2NUM(result->result.netmask);
 }
 
 static VALUE
 rb_geoip2_lr_to_h(VALUE self)
 {
-  MMDB_lookup_result_s *result = NULL;
+  LookupResult *result = NULL;
   MMDB_entry_data_list_s *entry_data_list = NULL;
   VALUE hash;
   VALUE cache;
@@ -452,11 +481,8 @@ rb_geoip2_lr_to_h(VALUE self)
     }
   }
 
-  TypedData_Get_Struct(self,
-                       struct MMDB_lookup_result_s,
-                       &rb_lookup_result_type,
-                       result);
-  status = MMDB_get_entry_data_list(&result->entry, &entry_data_list);
+  result = lookup_result_get_open(self);
+  status = MMDB_get_entry_data_list(&result->result.entry, &entry_data_list);
   if (status != MMDB_SUCCESS) {
     rb_raise(rb_eGeoIP2Error, "%s", MMDB_strerror(status));
   }
