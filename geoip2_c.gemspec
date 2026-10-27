@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
   spec.extensions    = ["ext/geoip2/extconf.rb"]
+  spec.required_ruby_version = ">= 2.3.0"
 
   spec.add_dependency('mini_portile2', '~> 2.8')
   spec.add_development_dependency "appraisal"
