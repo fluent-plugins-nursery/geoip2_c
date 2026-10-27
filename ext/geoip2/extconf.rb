@@ -1,8 +1,8 @@
 require "mkmf"
 require "mini_portile2"
 
-maxminddb_version = "1.13.3"
-maxminddb_sha256 = "a66502ea76eadbe17f2cd6fd708946777253972d2ae8157dee1b23a2fb528171"
+maxminddb_version = "1.14.1"
+maxminddb_sha256 = "ca5c87d41339f8bc4daabb53e8a9356b3c995f2d2419b85d7bff823b2ecc252d"
 
 recipe = MiniPortile.new("libmaxminddb", maxminddb_version)
 recipe.files = [{
