@@ -1,7 +1,7 @@
+#include <stdbool.h>
 #include <ruby.h>
 #include <ruby/encoding.h>
 #include <maxminddb.h>
-#include "rb_compat.h"
 
 VALUE rb_mGeoIP2;
 VALUE rb_cGeoIP2Database;
