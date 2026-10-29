@@ -16,6 +16,4 @@ $INCFLAGS = "-I#{File.join(recipe.path, 'include')} " + $INCFLAGS
 $LDFLAGS << " -L#{File.join(recipe.path, 'lib')} -lmaxminddb"
 $CFLAGS << " -std=c99 -fPIC -fms-extensions -I#{File.join(recipe.path, 'include')}"
 
-have_func("rb_sym2str", "ruby.h")
-
 create_makefile("geoip2/geoip2")
