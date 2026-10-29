@@ -8,10 +8,14 @@ Gem::Specification.new do |spec|
   spec.authors       = ["okkez"]
   spec.email         = ["okkez000@gmail.com"]
 
-  spec.summary       = %q{Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{Write a longer description or delete this line.}
-  spec.homepage      = ""
+  spec.summary       = %q{Ruby binding for libmaxminddb}
+  spec.description   = %q{geoip2_c is a Ruby binding for libmaxminddb to read MaxMind DB files such as GeoIP2. It does not traverse all elements in a lookup result by default, so you can get the element you want fast.}
+  spec.homepage      = "https://github.com/fluent-plugins-nursery/geoip2_c"
   spec.license       = "Apache-2.0"
+  spec.metadata      = {
+    "source_code_uri" => "https://github.com/fluent-plugins-nursery/geoip2_c",
+    "bug_tracker_uri" => "https://github.com/fluent-plugins-nursery/geoip2_c/issues",
+  }
 
   spec.files         = `git ls-files -z --recurse-submodules`.split("\x0").reject do |f|
     f.match(%r{^(test|spec|features|benchmark)/})
