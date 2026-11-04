@@ -16,7 +16,7 @@ Need ruby.h to build this extension, so you must install it before build this ex
 Debian GNU Linux / Ubuntu:
 
 ```
-$ sudo apt install -y build-essential automake autoconf libtool pkg-config
+$ sudo apt install -y build-essential automake autoconf libtool pkgconf
 ```
 
 CentOS:
