@@ -50,9 +50,11 @@ By default, the installation downloads the source of libmaxminddb from GitHub an
     $ sudo apt install -y libmaxminddb-dev    # or: sudo yum install -y libmaxminddb-devel
     $ gem install geoip2_c -- --use-system-libraries
 
-Setting the environment variable `GEOIP2_C_USE_SYSTEM_LIBRARIES` has the same effect, which helps when geoip2_c is installed as a dependency of another gem:
+Setting the environment variable `GEOIP2_C_USE_SYSTEM_LIBRARIES` has the same effect, which helps when geoip2_c is installed as a dependency of another gem. Any value enables it, even `0` or an empty value:
 
     $ GEOIP2_C_USE_SYSTEM_LIBRARIES=1 gem install fluent-plugin-geoip
+
+In both ways, the extension is linked to the shared library of libmaxminddb. Keep the runtime package (`libmaxminddb0` on Debian and Ubuntu, `libmaxminddb` on RHEL) installed wherever geoip2_c is used.
 
 ## Usage
 

@@ -9,7 +9,8 @@ if arg_config("--use-system-libraries", ENV.key?("GEOIP2_C_USE_SYSTEM_LIBRARIES"
   pkg_config("libmaxminddb")
   unless have_header("maxminddb.h") && have_library("maxminddb", "MMDB_open")
     abort "libmaxminddb is not found. Install libmaxminddb-dev (Debian, Ubuntu) " \
-          "or libmaxminddb-devel (RHEL), or build without --use-system-libraries."
+          "or libmaxminddb-devel (RHEL), or build without --use-system-libraries " \
+          "and without GEOIP2_C_USE_SYSTEM_LIBRARIES."
   end
   $CFLAGS << " -std=c99 -fPIC -fms-extensions"
 else
