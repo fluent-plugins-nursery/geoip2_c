@@ -16,7 +16,7 @@ Need ruby.h to build this extension, so you must install it before build this ex
 Debian GNU Linux / Ubuntu:
 
 ```
-$ sudo apt install -y build-essential automake autoconf libtool
+$ sudo apt install -y build-essential automake autoconf libtool pkgconf
 ```
 
 CentOS:
@@ -25,7 +25,7 @@ CentOS:
 $ sudo yum groupinstall -y "Development Tools"
 ```
 
-**NOTE**: If you want to use libmaxminddb provided as a deb/rpm package, you can install libmaxminddb-dev or libmaxminddb-devel at your own risk.
+The build downloads the libmaxminddb source from GitHub, so it needs network access.
 
 ## Installation
 
