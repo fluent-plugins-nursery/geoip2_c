@@ -24,6 +24,7 @@ else
     url: "https://github.com/maxmind/libmaxminddb/releases/download/#{maxminddb_version}/libmaxminddb-#{maxminddb_version}.tar.gz",
     sha256: maxminddb_sha256
   }]
+  recipe.configure_options += ["--with-pic"]
   recipe.cook
   recipe.activate
 
