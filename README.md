@@ -25,7 +25,7 @@ CentOS:
 $ sudo yum groupinstall -y "Development Tools"
 ```
 
-The build downloads the libmaxminddb source from GitHub, so it needs network access.
+By default, the build downloads the libmaxminddb source from GitHub, so it needs network access. To build without network access, use [libmaxminddb installed on the system](#using-libmaxminddb-installed-on-the-system).
 
 ## Installation
 
