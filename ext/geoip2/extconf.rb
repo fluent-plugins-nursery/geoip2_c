@@ -42,7 +42,7 @@ else
   recipe.activate
 
   $INCFLAGS = "-I#{File.join(recipe.path, 'include')} " + $INCFLAGS
-  $LDFLAGS << " -L#{File.join(recipe.path, 'lib')} -lmaxminddb"
+  $LOCAL_LIBS << " #{File.join(recipe.path, 'lib', 'libmaxminddb.a')}"
   $CFLAGS << " -std=c99 -fPIC -fms-extensions -I#{File.join(recipe.path, 'include')}"
 end
 
